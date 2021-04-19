@@ -141,7 +141,8 @@ class Auth(object):
 
                 if last_evaluated_key is not None:
                     results = RolesModel.scan(
-                        limit=int(limit), last_evaluated_key=last_evaluated_key
+                        limit=int(limit),
+                        last_evaluated_key=Utility.json_loads(last_evaluated_key),
                     )
                     roles = [role for role in results]
                     last_evaluated_key = results.last_evaluated_key
