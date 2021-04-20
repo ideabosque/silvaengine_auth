@@ -6,8 +6,8 @@ __author__ = "bibow"
 
 import traceback, uuid
 from datetime import datetime
-from object_types import PermissionType, RoleType, PermissionInputType, RoleInputType
-from models import BaseModel, PermissionsModel, RolesModel
+from .object_types import PermissionType, RoleType, PermissionInputType, RoleInputType
+from .models import BaseModel, PermissionsModel, RolesModel
 from graphene import ObjectType, String, Int, List, Field, Schema, Mutation
 from silvaengine_utility import Utility
 
