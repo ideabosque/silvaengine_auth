@@ -17,9 +17,9 @@ class Auth(object):
         self.logger = logger
         self.setting = setting
         if (
-            "region_name" in setting.keys()
-            and "aws_access_key_id" in setting.keys()
-            and "aws_secret_access_key" in setting.keys()
+            setting.get("region_name")
+            and setting.get("aws_access_key_id")
+            and setting.get("aws_secret_access_key")
         ):
             BaseModel.Meta.region = setting.get("region_name")
             BaseModel.Meta.aws_access_key_id = setting.get("aws_access_key_id")
@@ -317,7 +317,12 @@ if __name__ == "__main__":
 
     variables = {
         "limit": 1,
-        "lastEvaluatedKey": """{\n    \"service\": {\n        \"S\": \"xyz\"\n    },\n    \"permission_id\": {\n        \"S\": \"666c6f90-a013-11eb-8016-0242ac120002\"\n    }\n}""",
+        "lastEvaluatedKey": Utility.json_dumps(
+            {
+                "service": {"S": "xyz"},
+                "permission_id": {"S": "666c6f90-a013-11eb-8016-0242ac120002"},
+            }
+        ),
     }
 
     # query = """
