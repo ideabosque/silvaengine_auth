@@ -9,7 +9,6 @@ from datetime import datetime
 from .object_types import PermissionType, RoleType, PermissionInputType, RoleInputType
 from .models import BaseModel, PermissionsModel, RolesModel
 from graphene import ObjectType, String, Int, List, Field, Schema, Mutation
-from graphdoc import to_doc
 from silvaengine_utility import Utility
 
 
@@ -149,14 +148,13 @@ class Query(ObjectType):
         last_evaluated_key = kwargs.get("last_evaluated_key")
         role_id = kwargs.get("role_id")
         if role_id is not None:
-            roles = RolesModel.query(role_id)
+            role = RolesModel.get(role_id)
             return [
                 RoleType(
                     **Utility.json_loads(
-                        Utility.json_dumps(**role.__dict__["attribute_values"])
+                        Utility.json_dumps(role.__dict__["attribute_values"])
                     )
                 )
-                for role in roles
             ]
 
         if last_evaluated_key is not None:
@@ -243,6 +241,8 @@ class Mutations(ObjectType):
 
 
 def graphql_schema_doc():
+    from graphdoc import to_doc
+
     schema = Schema(
         query=Query,
         mutation=Mutations,

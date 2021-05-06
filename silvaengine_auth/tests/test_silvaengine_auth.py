@@ -37,34 +37,26 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
     @unittest.skip("demonstrating skipping")
     def test_graphql_getpermissions(self):
-        query = """
-            query getPermissions(
-                    $limit: Int!
-                ){
-                permissions(
-                    limit: $limit
-                ){
-                    permissionId
-                    service
-                    action
-                    paths
-                    createdAt
-                    updatedAt
-                    updatedBy
-                    lastEvaluatedKey
-                }
-            }
-        """
+        # query = """
+        #     query($limit: Int!) {
+        #         permissions(limit: $limit) {
+        #             permissionId
+        #             service
+        #             action
+        #             paths
+        #             createdAt
+        #             updatedAt
+        #             updatedBy
+        #             lastEvaluatedKey
+        #         }
+        #     }
+        # """
 
-        variables = {"limit": 1}
+        # variables = {"limit": 1}
 
         # query = """
-        #     query getPermissions(
-        #             $permissionId: String!
-        #         ){
-        #         permissions(
-        #             permissionId: $permissionId
-        #         ){
+        #     query($permissionId: String!) {
+        #         permissions(permissionId: $permissionId) {
         #             permissionId
         #             service
         #             action
@@ -78,36 +70,30 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
         # variables = {"permissionId": "666c6f90-a013-11eb-8016-0242ac120002"}
 
-        # query = """
-        #     query getPermissions(
-        #             $limit: Int!,
-        #             $lastEvaluatedKey: String!
-        #         ){
-        #         permissions(
-        #             limit: $limit,
-        #             lastEvaluatedKey: $lastEvaluatedKey
-        #         ){
-        #             permissionId
-        #             service
-        #             action
-        #             paths
-        #             createdAt
-        #             updatedAt
-        #             updatedBy
-        #             lastEvaluatedKey
-        #         }
-        #     }
-        # """
+        query = """
+            query($limit: Int!, $lastEvaluatedKey: String!) {
+                permissions(limit: $limit, lastEvaluatedKey: $lastEvaluatedKey) {
+                    permissionId
+                    service
+                    action
+                    paths
+                    createdAt
+                    updatedAt
+                    updatedBy
+                    lastEvaluatedKey
+                }
+            }
+        """
 
-        # variables = {
-        #     "limit": 1,
-        #     "lastEvaluatedKey": Utility.json_dumps(
-        #         {
-        #             "service": {"S": "xyz"},
-        #             "permission_id": {"S": "666c6f90-a013-11eb-8016-0242ac120002"},
-        #         }
-        #     ),
-        # }
+        variables = {
+            "limit": 1,
+            "lastEvaluatedKey": Utility.json_dumps(
+                {
+                    "service": {"S": "xyz"},
+                    "permission_id": {"S": "666c6f90-a013-11eb-8016-0242ac120002"},
+                }
+            ),
+        }
 
         payload = {"query": query, "variables": variables}
 
@@ -115,9 +101,71 @@ class SilvaEngineAuthTest(unittest.TestCase):
         logger.info(response)
 
     # @unittest.skip("demonstrating skipping")
+    def test_graphql_getroles(self):
+        # query = """
+        #     query($limit: Int!) {
+        #         roles(limit: $limit) {
+        #             roleId
+        #             name
+        #             permissionIds
+        #             userIds
+        #             createdAt
+        #             updatedAt
+        #             updatedBy
+        #         }
+        #     }
+        # """
+
+        # variables = {"limit": 1}
+
+        # query = """
+        #     query($roleId: String!) {
+        #         roles(roleId: $roleId) {
+        #             roleId
+        #             name
+        #             permissionIds
+        #             userIds
+        #             createdAt
+        #             updatedAt
+        #             updatedBy
+        #         }
+        #     }
+        # """
+
+        # variables = {"roleId": "96f5172e-adde-11eb-8638-0242ac120002"}
+
+        query = """
+            query($limit: Int!, $lastEvaluatedKey: String!) {
+                roles(limit: $limit, lastEvaluatedKey: $lastEvaluatedKey) {
+                    roleId
+                    name
+                    permissionIds
+                    userIds
+                    createdAt
+                    updatedAt
+                    updatedBy
+                }
+            }
+        """
+
+        variables = {
+            "limit": 1,
+            "lastEvaluatedKey": Utility.json_dumps(
+                {
+                    "role_id": {"S": "96f5172e-adde-11eb-8638-0242ac120002"},
+                }
+            ),
+        }
+
+        payload = {"query": query, "variables": variables}
+
+        response = self.auth.auth_graphql(**payload)
+        logger.info(response)
+
+    @unittest.skip("demonstrating skipping")
     def test_graphql_insertupdatepermission(self):
         mutation = """
-            mutation insertUpdatePermission(
+            mutation(
                     $permissionId: String!,
                     $service: String!,
                     $action: String!,
@@ -151,6 +199,79 @@ class SilvaEngineAuthTest(unittest.TestCase):
             "service": "xyz",
             "action": "read",
             "paths": ["abc", "edf"],
+            "updatedBy": "99999",
+        }
+
+        payload = {"mutation": mutation, "variables": variables}
+
+        response = self.auth.auth_graphql(**payload)
+        logger.info(response)
+
+    @unittest.skip("demonstrating skipping")
+    def test_graphql_insertupdaterole(self):
+        mutation = """
+            mutation(
+                    $roleId: String!,
+                    $name: String!,
+                    $permissionIds: [String]!,
+                    $userIds: [String]!,
+                    $updatedBy: String!
+                ) {
+                insertUpdateRole(
+                    roleInput:{
+                        roleId: $roleId,
+                        name: $name,
+                        permissionIds: $permissionIds,
+                        userIds: $userIds,
+                        updatedBy: $updatedBy
+                    }
+                ) {
+                    role{
+                        roleId
+                        name
+                        permissionIds
+                        userIds
+                        createdAt
+                        updatedAt
+                        updatedBy
+                    }
+                }
+            }
+        """
+
+        # mutation = """
+        #     mutation(
+        #             $name: String!,
+        #             $permissionIds: [String]!,
+        #             $userIds: [String]!,
+        #             $updatedBy: String!
+        #         ) {
+        #         insertUpdateRole(
+        #             roleInput:{
+        #                 name: $name,
+        #                 permissionIds: $permissionIds,
+        #                 userIds: $userIds,
+        #                 updatedBy: $updatedBy
+        #             }
+        #         ) {
+        #             role{
+        #                 roleId
+        #                 name
+        #                 permissionIds
+        #                 userIds
+        #                 createdAt
+        #                 updatedAt
+        #                 updatedBy
+        #             }
+        #         }
+        #     }
+        # """
+
+        variables = {
+            "roleId": "96f5172e-adde-11eb-8638-0242ac120002",
+            "name": "abx",
+            "permissionIds": ["1234567890"],
+            "userIds": ["abcxyz"],
             "updatedBy": "99999",
         }
 
