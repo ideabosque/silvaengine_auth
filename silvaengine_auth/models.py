@@ -7,9 +7,11 @@ __author__ = "bibow"
 from pynamodb.models import Model
 from pynamodb.attributes import (
     ListAttribute,
+    MapAttribute,
     UnicodeAttribute,
     UnicodeSetAttribute,
     UTCDateTimeAttribute,
+    NumberAttribute,
 )
 
 
@@ -27,21 +29,23 @@ class AuthBaseModel(BaseModel):
     updated_by = UnicodeAttribute()
 
 
-class PermissionsModel(AuthBaseModel):
+class ResourceModel(AuthBaseModel):
     class Meta(AuthBaseModel.Meta):
-        table_name = "se-permissions"
+        table_name = "se-resources"
 
-    permission_id = UnicodeAttribute(hash_key=True)
+    resource_id = UnicodeAttribute(hash_key=True)
     service = UnicodeAttribute(range_key=True)
-    action = UnicodeAttribute()
-    paths = ListAttribute()
+    path = UnicodeAttribute()
+    name = UnicodeAttribute()
+    status = NumberAttribute()
+    # action = UnicodeAttribute()
 
 
-class RolesModel(AuthBaseModel):
+class RoleModel(AuthBaseModel):
     class Meta(AuthBaseModel.Meta):
         table_name = "se-roles"
 
     role_id = UnicodeAttribute(hash_key=True)
     name = UnicodeAttribute()
-    permission_ids = ListAttribute()
+    permissions = ListAttribute(of=MapAttribute)
     user_ids = ListAttribute()

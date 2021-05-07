@@ -4,14 +4,34 @@ from __future__ import print_function
 
 __author__ = "bibow"
 
-from graphene import ObjectType, InputObjectType, String, Decimal, DateTime, List, Field
+from graphene import (
+    ObjectType,
+    InputObjectType,
+    String,
+    Decimal,
+    DateTime,
+    List,
+    Field,
+    Int,
+)
 
 
 class PermissionType(ObjectType):
-    permission_id = String()
+    resource_id = String()
+    permission = Int()
+
+
+class PermissionInputType(InputObjectType):
+    resource_id = String()
+    permission = Int()
+
+
+class ResourceType(ObjectType):
+    resource_id = String()
     service = String()
-    action = String()
-    paths = List(String)
+    path = String()
+    name = String()
+    status = Int()
     created_at = DateTime()
     updated_at = DateTime()
     updated_by = String()
@@ -21,7 +41,7 @@ class PermissionType(ObjectType):
 class RoleType(ObjectType):
     role_id = String()
     name = String()
-    permission_ids = List(String)
+    permissions = List(PermissionType)
     user_ids = List(String)
     created_at = DateTime()
     updated_at = DateTime()
@@ -29,17 +49,18 @@ class RoleType(ObjectType):
     last_evaluated_key = String()
 
 
-class PermissionInputType(InputObjectType):
-    permission_id = String()
+class ResourceInputType(InputObjectType):
+    resource_id = String()
     service = String()
-    action = String()
-    paths = List(String)
+    path = String()
+    name = String()
+    status = Int()
     updated_by = String()
 
 
 class RoleInputType(InputObjectType):
     role_id = String()
     name = String()
-    permission_ids = List(String)
+    permissions = List(PermissionInputType)
     user_ids = List(String)
     updated_by = String()

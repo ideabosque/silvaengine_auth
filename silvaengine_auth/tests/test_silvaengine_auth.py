@@ -36,14 +36,40 @@ class SilvaEngineAuthTest(unittest.TestCase):
         logger.info("Destory SilvaEngineAuthTest ...")
 
     @unittest.skip("demonstrating skipping")
-    def test_graphql_getpermissions(self):
+    def test_graphql_get_resource_or_roles(self):
         # query = """
-        #     query($limit: Int!) {
-        #         permissions(limit: $limit) {
-        #             permissionId
+        #     query getResources(
+        #             $limit: Int!
+        #         ){
+        #         resources(
+        #             limit: $limit
+        #         ){
+        #             resourceId
         #             service
-        #             action
-        #             paths
+        #             name
+        #             path
+        #             status
+        #             createdAt
+        #             updatedAt
+        #             updatedBy
+        #             lastEvaluatedKey
+        #         }
+        #     }
+        # # """
+
+        # variables = {"limit": 1}
+
+        # query = """
+        #     query getRoles(
+        #             $limit: Int!
+        #         ){
+        #         roles(
+        #             limit: $limit
+        #         ){
+        #             roleId
+        #             name
+        #             permissions{resourceId, permission}
+        #             userIds
         #             createdAt
         #             updatedAt
         #             updatedBy
@@ -52,31 +78,22 @@ class SilvaEngineAuthTest(unittest.TestCase):
         #     }
         # """
 
-        # variables = {"limit": 1}
-
-        # query = """
-        #     query($permissionId: String!) {
-        #         permissions(permissionId: $permissionId) {
-        #             permissionId
-        #             service
-        #             action
-        #             paths
-        #             createdAt
-        #             updatedAt
-        #             updatedBy
-        #         }
-        #     }
-        # """
-
-        # variables = {"permissionId": "666c6f90-a013-11eb-8016-0242ac120002"}
+        # variables = {"resourceId": "666c6f90-a013-11eb-8016-0242ac120002"}
 
         query = """
-            query($limit: Int!, $lastEvaluatedKey: String!) {
-                permissions(limit: $limit, lastEvaluatedKey: $lastEvaluatedKey) {
-                    permissionId
+            query getResources(
+                    $limit: Int!,
+                    $lastEvaluatedKey: String
+                ){
+                resources(
+                    limit: $limit,
+                    lastEvaluatedKey: $lastEvaluatedKey
+                ){
+                    resourceId
                     service
-                    action
-                    paths
+                    name
+                    path
+                    status
                     createdAt
                     updatedAt
                     updatedBy
@@ -89,103 +106,43 @@ class SilvaEngineAuthTest(unittest.TestCase):
             "limit": 1,
             "lastEvaluatedKey": Utility.json_dumps(
                 {
-                    "service": {"S": "xyz"},
-                    "permission_id": {"S": "666c6f90-a013-11eb-8016-0242ac120002"},
+                    # "service": {"S": "xyz"},
+                    "resource_id": {"S": "e0dff598-ae3d-11eb-94ae-0242ac120002"},
                 }
             ),
         }
 
         payload = {"query": query, "variables": variables}
-
         response = self.auth.auth_graphql(**payload)
         logger.info(response)
 
     # @unittest.skip("demonstrating skipping")
-    def test_graphql_getroles(self):
-        # query = """
-        #     query($limit: Int!) {
-        #         roles(limit: $limit) {
-        #             roleId
-        #             name
-        #             permissionIds
-        #             userIds
-        #             createdAt
-        #             updatedAt
-        #             updatedBy
-        #         }
-        #     }
-        # """
-
-        # variables = {"limit": 1}
-
-        # query = """
-        #     query($roleId: String!) {
-        #         roles(roleId: $roleId) {
-        #             roleId
-        #             name
-        #             permissionIds
-        #             userIds
-        #             createdAt
-        #             updatedAt
-        #             updatedBy
-        #         }
-        #     }
-        # """
-
-        # variables = {"roleId": "96f5172e-adde-11eb-8638-0242ac120002"}
-
-        query = """
-            query($limit: Int!, $lastEvaluatedKey: String!) {
-                roles(limit: $limit, lastEvaluatedKey: $lastEvaluatedKey) {
-                    roleId
-                    name
-                    permissionIds
-                    userIds
-                    createdAt
-                    updatedAt
-                    updatedBy
-                }
-            }
-        """
-
-        variables = {
-            "limit": 1,
-            "lastEvaluatedKey": Utility.json_dumps(
-                {
-                    "role_id": {"S": "96f5172e-adde-11eb-8638-0242ac120002"},
-                }
-            ),
-        }
-
-        payload = {"query": query, "variables": variables}
-
-        response = self.auth.auth_graphql(**payload)
-        logger.info(response)
-
-    @unittest.skip("demonstrating skipping")
-    def test_graphql_insertupdatepermission(self):
+    def test_graphql_insertupdateresource(self):
         mutation = """
-            mutation(
-                    $permissionId: String!,
+            mutation insertUpdateResource(
+                    $resourceId: String!,
                     $service: String!,
-                    $action: String!,
-                    $paths: [String]!,
+                    $name: String!,
+                    $path: String!,
+                    $status: Int!,
                     $updatedBy: String!
                 ) {
-                insertUpdatePermission(
-                    permissionInput:{
-                        permissionId: $permissionId,
+                insertUpdateResource(
+                    resourceInput:{
+                        resourceId: $resourceId,
                         service: $service,
-                        action: $action,
-                        paths: $paths,
+                        name: $name,
+                        path: $path,
+                        status: $status,
                         updatedBy: $updatedBy
                     }
                 ) {
-                    permission{
-                        permissionId
+                    resource{
+                        resourceId
                         service
-                        action
-                        paths
+                        name
+                        path
+                        status
                         createdAt
                         updatedAt
                         updatedBy
@@ -195,25 +152,31 @@ class SilvaEngineAuthTest(unittest.TestCase):
         """
 
         variables = {
-            "permissionId": "666c6f90-a013-11eb-8016-0242ac120002",
-            "service": "xyz",
-            "action": "read",
-            "paths": ["abc", "edf"],
-            "updatedBy": "99999",
+            # "resourceId": "666c6f90-a013-11eb-8016-0242ac120002",
+            "resourceId": "",
+            "service": "abc",
+            "name": "Product",
+            "path": "/core/api/products",
+            "status": 1,
+            "updatedBy": "123",
         }
 
         payload = {"mutation": mutation, "variables": variables}
-
         response = self.auth.auth_graphql(**payload)
         logger.info(response)
+
+    # post / put / patch / delete <===> query / update / create / delete
+    # put/patch === update
+    # post == insert / create
+    # delete == delete
 
     @unittest.skip("demonstrating skipping")
     def test_graphql_insertupdaterole(self):
         mutation = """
-            mutation(
-                    $roleId: String!,
+            mutation insertUpdateRole(
+                    $roleId: String,
                     $name: String!,
-                    $permissionIds: [String]!,
+                    $permissions: [PermissionInputType]!,
                     $userIds: [String]!,
                     $updatedBy: String!
                 ) {
@@ -221,7 +184,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                     roleInput:{
                         roleId: $roleId,
                         name: $name,
-                        permissionIds: $permissionIds,
+                        permissions: $permissions,
                         userIds: $userIds,
                         updatedBy: $updatedBy
                     }
@@ -229,7 +192,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                     role{
                         roleId
                         name
-                        permissionIds
+                        permissions{resourceId, permission}
                         userIds
                         createdAt
                         updatedAt
@@ -239,39 +202,13 @@ class SilvaEngineAuthTest(unittest.TestCase):
             }
         """
 
-        # mutation = """
-        #     mutation(
-        #             $name: String!,
-        #             $permissionIds: [String]!,
-        #             $userIds: [String]!,
-        #             $updatedBy: String!
-        #         ) {
-        #         insertUpdateRole(
-        #             roleInput:{
-        #                 name: $name,
-        #                 permissionIds: $permissionIds,
-        #                 userIds: $userIds,
-        #                 updatedBy: $updatedBy
-        #             }
-        #         ) {
-        #             role{
-        #                 roleId
-        #                 name
-        #                 permissionIds
-        #                 userIds
-        #                 createdAt
-        #                 updatedAt
-        #                 updatedBy
-        #             }
-        #         }
-        #     }
-        # """
-
         variables = {
-            "roleId": "96f5172e-adde-11eb-8638-0242ac120002",
-            "name": "abx",
-            "permissionIds": ["1234567890"],
-            "userIds": ["abcxyz"],
+            # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
+            "name": "test",
+            "permissions": [
+                {"resourceId": "a81691d4-ae3a-11eb-8e18-0242ac120002", "permission": 15}
+            ],
+            "userIds": ["abc", "edf"],
             "updatedBy": "99999",
         }
 
