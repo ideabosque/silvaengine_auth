@@ -9,6 +9,7 @@ from silvaengine_utility import Utility
 from .schema import Query, Mutations, type_class
 from .models import BaseModel, ResourceModel, RoleModel
 from .utils import extractFieldsFromAST
+import json, os
 
 
 class Auth(object):
@@ -61,22 +62,40 @@ class Auth(object):
 
     @staticmethod
     def isAuthorized(event, logger):
-        uid = event["requestContext"]["identity"].get("user")
+        BaseModel.Meta.region = os.getenv("region_name")
+        BaseModel.Meta.aws_access_key_id = os.getenv("aws_access_key_id")
+        BaseModel.Meta.aws_secret_access_key = os.getenv("aws_secret_access_key")
+
+        print(
+            os.getenv("region_name"),
+            os.getenv("aws_access_key_id"),
+            os.getenv("aws_secret_access_key"),
+        )
+
+        uid = event["requestContext"]["authorizer"]["claims"]["sub"]
         area = event["pathParameters"]["area"]
         # method = event["httpMethod"]
+        contentType = event["headers"]["Content-Type"]
         endpoint_id = event["pathParameters"]["endpoint_id"]
         funct = event["pathParameters"]["proxy"]
         path = f"/{area}/{endpoint_id}/{funct}"
-        # create - 1, read - 2, update - 4, delete - 8
-        permission = 0
+        body = event["body"]
 
         logger.info("SilvaEngine Auth isAuthorized")
         logger.info(event)
 
+        if contentType.strip().lower() == "application/json":
+            bodyJSON = json.loads(body)
+
+            if "query" in bodyJSON:
+                body = bodyJSON["query"]
+
         # Parse the graphql request's body to AST and extract fields from the AST
         # extractFieldsFromAST(schema, operation, deepth)
         # operation = [mutation | query]
-        fields = extractFieldsFromAST(event["body"], deepth=1)
+        # create - 1, read - 2, update - 4, delete - 8
+        permission = 0
+        fields = extractFieldsFromAST(body, deepth=1)
 
         if "mutation" in fields:
             # create - 1, read - 2, update = 4, delete = 8
