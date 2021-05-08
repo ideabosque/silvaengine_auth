@@ -15,8 +15,8 @@ from .object_types import (
     PermissionInputType,
 )
 from .models import BaseModel, ResourceModel, RoleModel
+from graphql import parse
 from graphene import ObjectType, String, Int, List, Field, Schema, Mutation
-from graphdoc import to_doc
 from silvaengine_utility import Utility
 
 
@@ -260,6 +260,8 @@ class Mutations(ObjectType):
 
 # Generate API documents.
 def graphql_schema_doc():
+    from graphdoc import to_doc
+
     schema = Schema(
         query=Query,
         mutation=Mutations,

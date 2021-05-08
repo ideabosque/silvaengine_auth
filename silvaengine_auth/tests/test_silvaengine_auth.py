@@ -116,7 +116,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.auth_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_graphql_insertupdateresource(self):
         mutation = """
             mutation insertUpdateResource(
@@ -170,7 +170,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     # post == insert / create
     # delete == delete
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_graphql_insertupdaterole(self):
         mutation = """
             mutation insertUpdateRole(
@@ -206,7 +206,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
             # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
             "name": "test",
             "permissions": [
-                {"resourceId": "a81691d4-ae3a-11eb-8e18-0242ac120002", "permission": 15}
+                {"resourceId": "7f359f30-af16-11eb-8bb3-0242ac180002", "permission": 15}
             ],
             "userIds": ["abc", "edf"],
             "updatedBy": "99999",

@@ -8,6 +8,7 @@ from graphene import Schema
 from silvaengine_utility import Utility
 from .schema import Query, Mutations, type_class
 from .models import BaseModel, ResourceModel, RoleModel
+from .utils import extractFieldsFromAST
 
 
 class Auth(object):
@@ -59,10 +60,42 @@ class Auth(object):
         return Utility.json_dumps(response)
 
     @staticmethod
-    def isAuthorized(**kwargs):
-        uid = kwargs.get("uid")
-        path = kwargs.get("path")
-        permission = kwargs.get("permission")
+    def isAuthorized(event, logger):
+        uid = event["requestContext"]["identity"].get("user")
+        area = event["pathParameters"]["area"]
+        # method = event["httpMethod"]
+        endpoint_id = event["pathParameters"]["endpoint_id"]
+        funct = event["pathParameters"]["proxy"]
+        path = f"/{area}/{endpoint_id}/{funct}"
+        # create - 1, read - 2, update - 4, delete - 8
+        permission = 0
+
+        logger.info("SilvaEngine Auth isAuthorized")
+        logger.info(event["body"])
+
+        # Parse the graphql request's body to AST and extract fields from the AST
+        # extractFieldsFromAST(schema, operation, deepth)
+        # operation = [mutation | query]
+        fields = extractFieldsFromAST(event["body"], deepth=1)
+
+        if "mutation" in fields:
+            # create - 1, read - 2, update = 4, delete = 8
+            for operation in event["function_configurations"].config.mutations:
+                fn = (
+                    (event["function_configurations"].config.mutations[operation])
+                    .strip()
+                    .lower()
+                )
+
+                if fn in fields["mutation"]:
+                    if operation.lower() == "create":
+                        permission += 1
+                    elif operation.lower() == "update":
+                        permission += 4
+                    elif operation.lower() == "delete":
+                        permission += 8
+        elif "query" in fields:  # @TODO: Check query fields permission
+            permission += 2
 
         if not uid or not path or not permission:
             return False
