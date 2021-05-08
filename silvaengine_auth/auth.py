@@ -71,7 +71,7 @@ class Auth(object):
         permission = 0
 
         logger.info("SilvaEngine Auth isAuthorized")
-        logger.info(event["body"])
+        logger.info(event)
 
         # Parse the graphql request's body to AST and extract fields from the AST
         # extractFieldsFromAST(schema, operation, deepth)
@@ -80,9 +80,9 @@ class Auth(object):
 
         if "mutation" in fields:
             # create - 1, read - 2, update = 4, delete = 8
-            for operation in event["function_configurations"].config.mutations:
+            for operation in event["fnConfigurations"].config.mutations:
                 fn = (
-                    (event["function_configurations"].config.mutations[operation])
+                    (event["fnConfigurations"].config.mutations[operation])
                     .strip()
                     .lower()
                 )
