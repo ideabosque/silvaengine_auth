@@ -14,6 +14,7 @@ import json, os
 
 class Auth(object):
     def __init__(self, logger, **setting):
+        BaseModel.Meta.region = os.getenv("REGIONNAME")
         self.logger = logger
         self.setting = setting
 
@@ -62,15 +63,9 @@ class Auth(object):
 
     @staticmethod
     def isAuthorized(event, logger):
-        BaseModel.Meta.region = os.getenv("region_name")
-        BaseModel.Meta.aws_access_key_id = os.getenv("aws_access_key_id")
-        BaseModel.Meta.aws_secret_access_key = os.getenv("aws_secret_access_key")
-
-        print(
-            os.getenv("region_name"),
-            os.getenv("aws_access_key_id"),
-            os.getenv("aws_secret_access_key"),
-        )
+        BaseModel.Meta.region = os.getenv("REGIONNAME")
+        # BaseModel.Meta.aws_access_key_id = os.getenv("aws_access_key_id")
+        # BaseModel.Meta.aws_secret_access_key = os.getenv("aws_secret_access_key")
 
         uid = event["requestContext"]["authorizer"]["claims"]["sub"]
         area = event["pathParameters"]["area"]
