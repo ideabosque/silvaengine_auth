@@ -70,16 +70,16 @@ class DeleteRole(Mutation):
     @staticmethod
     def mutate(root, info, role_input=None):
         try:
-            _role = delete_role_handler(role_input)
-            role = RoleType(
-                **Utility.json_loads(
-                    Utility.json_dumps(_role.__dict__["attribute_values"])
-                )
-            )
+            delete_role_handler(role_input)
+            # role = RoleType(
+            #     **Utility.json_loads(
+            #         Utility.json_dumps(_role.__dict__["attribute_values"])
+            #     )
+            # )
         except Exception:
             log = traceback.format_exc()
             info.context.get("logger").exception(log)
             print("Exception")
             raise
 
-        return DeleteRole(role=role)
+        return DeleteRole(role=None)

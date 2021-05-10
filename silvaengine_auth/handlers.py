@@ -4,20 +4,6 @@ import uuid
 
 
 def create_role_handler(role_input):
-    # Update the role record.
-    if role_input.role_id:
-        role = RoleModel.get(role_input.role_id)
-        role.update(
-            actions=[
-                RoleModel.updated_at.set(datetime.utcnow()),
-                RoleModel.updated_by.set(role_input.updated_by),
-                RoleModel.name.set(role_input.name),
-                RoleModel.permissions.set(role_input.permissions),
-                RoleModel.user_ids.set(role_input.user_ids),
-            ]
-        )
-        return RoleModel.get(role_input.role_id)
-
     # Insert a role record.
     role_id = str(uuid.uuid1())
     RoleModel(
@@ -36,67 +22,30 @@ def create_role_handler(role_input):
 
 
 def update_role_handler(role_input):
+    assert role_input.role_id, "Role id is required"
+
     # Update the role record.
-    if role_input.role_id:
-        role = RoleModel.get(role_input.role_id)
-        role.update(
-            actions=[
-                RoleModel.updated_at.set(datetime.utcnow()),
-                RoleModel.updated_by.set(role_input.updated_by),
-                RoleModel.name.set(role_input.name),
-                RoleModel.permissions.set(role_input.permissions),
-                RoleModel.user_ids.set(role_input.user_ids),
-            ]
-        )
-        return RoleModel.get(role_input.role_id)
-
-    # Insert a role record.
-    role_id = str(uuid.uuid1())
-    RoleModel(
-        role_id,
-        **{
-            "name": role_input.name,
-            "permissions": role_input.permissions,
-            "user_ids": role_input.user_ids,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-            "updated_by": role_input.updated_by,
-        }
-    ).save()
-
-    return RoleModel.get(role_id)
+    role = RoleModel.get(role_input.role_id)
+    role.update(
+        actions=[
+            RoleModel.updated_at.set(datetime.utcnow()),
+            RoleModel.updated_by.set(role_input.updated_by),
+            RoleModel.name.set(role_input.name),
+            RoleModel.permissions.set(role_input.permissions),
+            RoleModel.user_ids.set(role_input.user_ids),
+        ]
+    )
+    return RoleModel.get(role_input.role_id)
 
 
 def delete_role_handler(role_input):
-    # Update the role record.
-    if role_input.role_id:
-        role = RoleModel.get(role_input.role_id)
-        role.update(
-            actions=[
-                RoleModel.updated_at.set(datetime.utcnow()),
-                RoleModel.updated_by.set(role_input.updated_by),
-                RoleModel.name.set(role_input.name),
-                RoleModel.permissions.set(role_input.permissions),
-                RoleModel.user_ids.set(role_input.user_ids),
-            ]
-        )
-        return RoleModel.get(role_input.role_id)
+    assert role_input.role_id, "Role id is required"
 
-    # Insert a role record.
-    role_id = str(uuid.uuid1())
-    RoleModel(
-        role_id,
-        **{
-            "name": role_input.name,
-            "permissions": role_input.permissions,
-            "user_ids": role_input.user_ids,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-            "updated_by": role_input.updated_by,
-        }
-    ).save()
+    # Delete the role record.
 
-    return RoleModel.get(role_id)
+    res = RoleModel(role_input.role_id).delete()
+
+    print(res)
 
 
 def insert_update_resource(resource_input):
