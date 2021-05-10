@@ -11,7 +11,7 @@ from .types import (
 from .models import BaseModel, ResourceModel, RoleModel
 
 
-def resolveResources(info, **kwargs):
+def resolve_resources(info, **kwargs):
     limit = kwargs.get("limit")
     last_evaluated_key = kwargs.get("last_evaluated_key")
     resource_id = kwargs.get("resource_id")
@@ -54,7 +54,7 @@ def resolveResources(info, **kwargs):
     ]
 
 
-def resolveRoles(info, **kwargs):
+def resolve_roles(info, **kwargs):
     limit = kwargs.get("limit")
     last_evaluated_key = kwargs.get("last_evaluated_key")
     role_id = kwargs.get("role_id")

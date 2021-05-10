@@ -1,9 +1,9 @@
 # Parse the graphql request's body to AST and extract fields from the AST
-def extractFieldsFromAST(source, **kwargs):
+def extract_fields_from_ast(source, **kwargs):
     from graphql import parse
     from graphql.language.ast import SelectionSet
 
-    def extractByRecursion(selections, **kwargs):
+    def extract_by_recursion(selections, **kwargs):
         fs = []
         dpt = kwargs.get("deepth")
 
@@ -23,7 +23,7 @@ def extractFieldsFromAST(source, **kwargs):
                 and type(s.selection_set.selections) is list
                 and len(s.selection_set.selections) > 0
             ):
-                return fs + extractByRecursion(s.selection_set.selections, deepth=dpt)
+                return fs + extract_by_recursion(s.selection_set.selections, deepth=dpt)
 
         return fs
 
@@ -39,9 +39,13 @@ def extractFieldsFromAST(source, **kwargs):
             continue
 
         if on in result:
-            result[on] += extractByRecursion(od.selection_set.selections, deepth=deepth)
+            result[on] += extract_by_recursion(
+                od.selection_set.selections, deepth=deepth
+            )
         else:
-            result[on] = extractByRecursion(od.selection_set.selections, deepth=deepth)
+            result[on] = extract_by_recursion(
+                od.selection_set.selections, deepth=deepth
+            )
 
     for operation in result:
         result[operation] = list({}.fromkeys(result[operation]).keys())

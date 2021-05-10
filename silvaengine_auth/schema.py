@@ -13,8 +13,8 @@ from .types import (
     RoleType,
 )
 from .models import BaseModel, ResourceModel, RoleModel
-from .queries import resolveResources, resolveRoles
-from .mutations import createRole, updateRole, deleteRole
+from .queries import resolve_resources, resolve_roles
+from .mutations import CreateRole, UpdateRole, DeleteRole
 
 
 def type_class():
@@ -38,10 +38,10 @@ class Query(ObjectType):
     )
 
     def resolve_resources(self, info, **kwargs):
-        return resolveResources(info, **kwargs)
+        return resolve_resources(info, **kwargs)
 
     def resolve_roles(self, info, **kwargs):
-        return resolveRoles(info, **kwargs)
+        return resolve_roles(info, **kwargs)
 
 
 # Append or modify resource info.
@@ -71,9 +71,9 @@ class Query(ObjectType):
 
 class Mutations(ObjectType):
     # insert_update_resource = InsertUpdateResource.Field()
-    createRole = createRole.Field()
-    updateRole = updateRole.Field()
-    deleteRole = deleteRole.Field()
+    create_role = CreateRole.Field()
+    update_role = UpdateRole.Field()
+    delete_role = DeleteRole.Field()
 
 
 # Generate API documents.

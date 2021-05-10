@@ -10,10 +10,10 @@ from .types import (
     PermissionInputType,
 )
 from .models import BaseModel, ResourceModel, RoleModel
-from .handlers import createRoleHandler, updateRoleHandler, deleteRoleHandler
+from .handlers import create_role_handler, update_role_handler, delete_role_handler
 
 # Append or modify role info.
-class createRole(Mutation):
+class CreateRole(Mutation):
     role = Field(RoleType)
 
     class Arguments:
@@ -22,7 +22,7 @@ class createRole(Mutation):
     @staticmethod
     def mutate(root, info, role_input=None):
         try:
-            _role = createRoleHandler(role_input)
+            _role = create_role_handler(role_input)
             role = RoleType(
                 **Utility.json_loads(
                     Utility.json_dumps(_role.__dict__["attribute_values"])
@@ -34,10 +34,10 @@ class createRole(Mutation):
             print("Exception")
             raise
 
-        return createRole(role=role)
+        return CreateRole(role=role)
 
 
-class updateRole(Mutation):
+class UpdateRole(Mutation):
     role = Field(RoleType)
 
     class Arguments:
@@ -46,7 +46,7 @@ class updateRole(Mutation):
     @staticmethod
     def mutate(root, info, role_input=None):
         try:
-            _role = updateRoleHandler(role_input)
+            _role = update_role_handler(role_input)
             role = RoleType(
                 **Utility.json_loads(
                     Utility.json_dumps(_role.__dict__["attribute_values"])
@@ -58,10 +58,10 @@ class updateRole(Mutation):
             print("Exception")
             raise
 
-        return updateRole(role=role)
+        return UpdateRole(role=role)
 
 
-class deleteRole(Mutation):
+class DeleteRole(Mutation):
     role = Field(RoleType)
 
     class Arguments:
@@ -70,7 +70,7 @@ class deleteRole(Mutation):
     @staticmethod
     def mutate(root, info, role_input=None):
         try:
-            _role = deleteRoleHandler(role_input)
+            _role = delete_role_handler(role_input)
             role = RoleType(
                 **Utility.json_loads(
                     Utility.json_dumps(_role.__dict__["attribute_values"])
@@ -82,4 +82,4 @@ class deleteRole(Mutation):
             print("Exception")
             raise
 
-        return deleteRole(role=role)
+        return DeleteRole(role=role)

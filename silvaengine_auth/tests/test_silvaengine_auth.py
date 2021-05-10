@@ -171,7 +171,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     # delete == delete
 
     @unittest.skip("demonstrating skipping")
-    def testCreateRole(self):
+    def test_create_role(self):
         mutation = """
             mutation createRole(
                     $roleId: String,
@@ -204,12 +204,10 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
         variables = {
             # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
-            "name": "Administrator",
-            "permissions": [
-                {"resourceId": "7f359f30-af16-11eb-8bb3-0242ac180002", "permission": 15}
-            ],
+            "name": "Manager",
+            "permissions": [{"resourceId": "Just for test", "permission": 15}],
             "userIds": ["39f3cc57-e5b3-422e-a140-6c316d308b2b"],
-            "updatedBy": "99999",
+            "updatedBy": "23456",
         }
 
         payload = {"mutation": mutation, "variables": variables}
@@ -218,7 +216,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         logger.info(response)
 
     @unittest.skip("demonstrating skipping")
-    def testUpdateRole(self):
+    def test_update_role(self):
         mutation = """
             mutation updateRole(
                     $roleId: String,
@@ -265,7 +263,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         logger.info(response)
 
     @unittest.skip("demonstrating skipping")
-    def testDeleteRole(self):
+    def test_delete_role(self):
         mutation = """
             mutation deleteRole(
                     $roleId: String,

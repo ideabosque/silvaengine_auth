@@ -3,7 +3,7 @@ from datetime import datetime
 import uuid
 
 
-def createRoleHandler(role_input):
+def create_role_handler(role_input):
     # Update the role record.
     if role_input.role_id:
         role = RoleModel.get(role_input.role_id)
@@ -35,7 +35,7 @@ def createRoleHandler(role_input):
     return RoleModel.get(role_id)
 
 
-def updateRoleHandler(role_input):
+def update_role_handler(role_input):
     # Update the role record.
     if role_input.role_id:
         role = RoleModel.get(role_input.role_id)
@@ -67,7 +67,7 @@ def updateRoleHandler(role_input):
     return RoleModel.get(role_id)
 
 
-def deleteRoleHandler(role_input):
+def delete_role_handler(role_input):
     # Update the role record.
     if role_input.role_id:
         role = RoleModel.get(role_input.role_id)

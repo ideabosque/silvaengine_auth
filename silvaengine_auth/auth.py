@@ -8,7 +8,7 @@ from graphene import Schema
 from silvaengine_utility import Utility
 from .schema import Query, Mutations, type_class
 from .models import BaseModel, ResourceModel, RoleModel
-from .utils import extractFieldsFromAST
+from .utils import extract_fields_from_ast
 import json, os
 
 
@@ -61,10 +61,10 @@ class Auth(object):
         return Utility.json_dumps(response)
 
     @staticmethod
-    def isAuthorized(event, logger):
+    def is_authorized(event, logger):
         uid = event["requestContext"]["authorizer"]["claims"]["sub"]
         area = event["pathParameters"]["area"]
-        contentType = event["headers"]["Content-Type"]
+        content_type = event["headers"]["Content-Type"]
         endpoint_id = event["pathParameters"]["endpoint_id"]
         funct = event["pathParameters"]["proxy"]
         path = f"/{area}/{endpoint_id}/{funct}"
@@ -74,18 +74,18 @@ class Auth(object):
         logger.info("SilvaEngine Auth isAuthorized")
         logger.info(event)
 
-        if contentType.strip().lower() == "application/json":
+        if content_type.strip().lower() == "application/json":
             bodyJSON = json.loads(body)
 
             if "query" in bodyJSON:
                 body = bodyJSON["query"]
 
         # Parse the graphql request's body to AST and extract fields from the AST
-        # extractFieldsFromAST(schema, operation, deepth)
+        # extract_fields_from_ast(schema, operation, deepth)
         # operation = [mutation | query]
         # create - 1, read - 2, update - 4, delete - 8
         permission = 0
-        fields = extractFieldsFromAST(body, deepth=1)
+        fields = extract_fields_from_ast(body, deepth=1)
 
         if "mutation" in fields:
             # create - 1, read - 2, update = 4, delete = 8
@@ -122,9 +122,9 @@ class Auth(object):
         if len(resources) < 1:
             return False
 
-        resourceId = resources.pop().resource_id
+        resource_id = resources.pop().resource_id
 
-        if not resourceId:
+        if not resource_id:
             return False
 
         # 2. Fetch role by user id
@@ -137,7 +137,7 @@ class Auth(object):
                 for rule in role.permissions:
                     logger.info(rule.get("permission"))
                     if (
-                        rule.get("resource_id") == resourceId
+                        rule.get("resource_id") == resource_id
                         and int(rule.get("permission")) & permission
                     ):
                         return True
