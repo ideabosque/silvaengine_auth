@@ -4,6 +4,7 @@ from __future__ import print_function
 
 __author__ = "bibow"
 
+import os
 from pynamodb.models import Model
 from pynamodb.attributes import (
     ListAttribute,
@@ -18,9 +19,15 @@ from pynamodb.attributes import (
 class BaseModel(Model):
     class Meta:
         billing_mode = "PAY_PER_REQUEST"
+        region = os.getenv("REGIONNAME")
+
+        if not region:
+            region = os.getenv("region_name")
+            aws_access_key_id = os.getenv("aws_access_key_id")
+            aws_secret_access_key = os.getenv("aws_secret_access_key")
 
 
-class AuthBaseModel(BaseModel):
+class TraitModel(BaseModel):
     class Meta(BaseModel.Meta):
         pass
 
@@ -29,8 +36,8 @@ class AuthBaseModel(BaseModel):
     updated_by = UnicodeAttribute()
 
 
-class ResourceModel(AuthBaseModel):
-    class Meta(AuthBaseModel.Meta):
+class ResourceModel(TraitModel):
+    class Meta(TraitModel.Meta):
         table_name = "se-resources"
 
     resource_id = UnicodeAttribute(hash_key=True)
@@ -41,8 +48,8 @@ class ResourceModel(AuthBaseModel):
     # action = UnicodeAttribute()
 
 
-class RoleModel(AuthBaseModel):
-    class Meta(AuthBaseModel.Meta):
+class RoleModel(TraitModel):
+    class Meta(TraitModel.Meta):
         table_name = "se-roles"
 
     role_id = UnicodeAttribute(hash_key=True)

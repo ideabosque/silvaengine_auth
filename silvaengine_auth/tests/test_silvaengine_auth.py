@@ -35,7 +35,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     def tearDown(self):
         logger.info("Destory SilvaEngineAuthTest ...")
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_graphql_get_resource_or_roles(self):
         # query = """
         #     query getResources(
@@ -57,43 +57,19 @@ class SilvaEngineAuthTest(unittest.TestCase):
         #     }
         # # """
 
-        # variables = {"limit": 1}
-
-        # query = """
-        #     query getRoles(
-        #             $limit: Int!
-        #         ){
-        #         roles(
-        #             limit: $limit
-        #         ){
-        #             roleId
-        #             name
-        #             permissions{resourceId, permission}
-        #             userIds
-        #             createdAt
-        #             updatedAt
-        #             updatedBy
-        #             lastEvaluatedKey
-        #         }
-        #     }
-        # """
-
-        # variables = {"resourceId": "666c6f90-a013-11eb-8016-0242ac120002"}
+        variables = {"limit": 1}
 
         query = """
-            query getResources(
-                    $limit: Int!,
-                    $lastEvaluatedKey: String
+            query getRoles(
+                    $limit: Int!
                 ){
-                resources(
-                    limit: $limit,
-                    lastEvaluatedKey: $lastEvaluatedKey
+                roles(
+                    limit: $limit
                 ){
-                    resourceId
-                    service
+                    roleId
                     name
-                    path
-                    status
+                    permissions{resourceId, permission}
+                    userIds
                     createdAt
                     updatedAt
                     updatedBy
@@ -102,18 +78,42 @@ class SilvaEngineAuthTest(unittest.TestCase):
             }
         """
 
-        variables = {
-            "limit": 1,
-            "lastEvaluatedKey": Utility.json_dumps(
-                {
-                    # "service": {"S": "xyz"},
-                    "resource_id": {"S": "e0dff598-ae3d-11eb-94ae-0242ac120002"},
-                }
-            ),
-        }
+        # variables = {"resourceId": "666c6f90-a013-11eb-8016-0242ac120002"}
+
+        # query = """
+        #     query getResources(
+        #             $limit: Int!,
+        #             $lastEvaluatedKey: String
+        #         ){
+        #         resources(
+        #             limit: $limit,
+        #             lastEvaluatedKey: $lastEvaluatedKey
+        #         ){
+        #             resourceId
+        #             service
+        #             name
+        #             path
+        #             status
+        #             createdAt
+        #             updatedAt
+        #             updatedBy
+        #             lastEvaluatedKey
+        #         }
+        #     }
+        # """
+
+        # variables = {
+        #     "limit": 1,
+        #     "lastEvaluatedKey": Utility.json_dumps(
+        #         {
+        #             # "service": {"S": "xyz"},
+        #             "resource_id": {"S": "e0dff598-ae3d-11eb-94ae-0242ac120002"},
+        #         }
+        #     ),
+        # }
 
         payload = {"query": query, "variables": variables}
-        response = self.auth.auth_graphql(**payload)
+        response = self.auth.role_graphql(**payload)
         logger.info(response)
 
     @unittest.skip("demonstrating skipping")
@@ -162,7 +162,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         }
 
         payload = {"mutation": mutation, "variables": variables}
-        response = self.auth.auth_graphql(**payload)
+        response = self.auth.role_graphql(**payload)
         logger.info(response)
 
     # post / put / patch / delete <===> query / update / create / delete
@@ -170,17 +170,64 @@ class SilvaEngineAuthTest(unittest.TestCase):
     # post == insert / create
     # delete == delete
 
-    # @unittest.skip("demonstrating skipping")
-    def test_graphql_insertupdaterole(self):
+    @unittest.skip("demonstrating skipping")
+    def testCreateRole(self):
         mutation = """
-            mutation insertUpdateRole(
+            mutation createRole(
                     $roleId: String,
                     $name: String!,
                     $permissions: [PermissionInputType]!,
                     $userIds: [String]!,
                     $updatedBy: String!
                 ) {
-                insertUpdateRole(
+                createRole(
+                    roleInput:{
+                        roleId: $roleId,
+                        name: $name,
+                        permissions: $permissions,
+                        userIds: $userIds,
+                        updatedBy: $updatedBy
+                    }
+                ) {
+                    role{
+                        roleId
+                        name
+                        permissions{resourceId, permission}
+                        userIds
+                        createdAt
+                        updatedAt
+                        updatedBy
+                    }
+                }
+            }
+        """
+
+        variables = {
+            # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
+            "name": "Administrator",
+            "permissions": [
+                {"resourceId": "7f359f30-af16-11eb-8bb3-0242ac180002", "permission": 15}
+            ],
+            "userIds": ["39f3cc57-e5b3-422e-a140-6c316d308b2b"],
+            "updatedBy": "99999",
+        }
+
+        payload = {"mutation": mutation, "variables": variables}
+
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    @unittest.skip("demonstrating skipping")
+    def testUpdateRole(self):
+        mutation = """
+            mutation updateRole(
+                    $roleId: String,
+                    $name: String!,
+                    $permissions: [PermissionInputType]!,
+                    $userIds: [String]!,
+                    $updatedBy: String!
+                ) {
+                updateRole(
                     roleInput:{
                         roleId: $roleId,
                         name: $name,
@@ -206,15 +253,48 @@ class SilvaEngineAuthTest(unittest.TestCase):
             # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
             "name": "test",
             "permissions": [
-                {"resourceId": "7f359f30-af16-11eb-8bb3-0242ac180002", "permission": 15}
+                {"resourceId": "7f359f30-af16-11eb-8bb3-0242ac180002", "permission": 1}
             ],
-            "userIds": ["abc", "edf"],
+            "userIds": ["39f3cc57-e5b3-422e-a140-6c316d308b2b"],
             "updatedBy": "99999",
         }
 
         payload = {"mutation": mutation, "variables": variables}
 
-        response = self.auth.auth_graphql(**payload)
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    @unittest.skip("demonstrating skipping")
+    def testDeleteRole(self):
+        mutation = """
+            mutation deleteRole(
+                    $roleId: String,
+                ) {
+                deleteRole(
+                    roleInput:{
+                        roleId: $roleId,
+                    }
+                ) {
+                    role{
+                        roleId
+                        name
+                        permissions{resourceId, permission}
+                        userIds
+                        createdAt
+                        updatedAt
+                        updatedBy
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
+        }
+
+        payload = {"mutation": mutation, "variables": variables}
+
+        response = self.auth.role_graphql(**payload)
         logger.info(response)
 
 

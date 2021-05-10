@@ -14,20 +14,19 @@ import json, os
 
 class Auth(object):
     def __init__(self, logger, **setting):
-        BaseModel.Meta.region = os.getenv("REGIONNAME")
         self.logger = logger
         self.setting = setting
 
-        if (
-            setting.get("region_name")
-            and setting.get("aws_access_key_id")
-            and setting.get("aws_secret_access_key")
-        ):
-            BaseModel.Meta.region = setting.get("region_name")
-            BaseModel.Meta.aws_access_key_id = setting.get("aws_access_key_id")
-            BaseModel.Meta.aws_secret_access_key = setting.get("aws_secret_access_key")
+        # if (
+        #     setting.get("region_name")
+        #     and setting.get("aws_access_key_id")
+        #     and setting.get("aws_secret_access_key")
+        # ):
+        #     BaseModel.Meta.region = setting.get("region_name")
+        #     BaseModel.Meta.aws_access_key_id = setting.get("aws_access_key_id")
+        #     BaseModel.Meta.aws_secret_access_key = setting.get("aws_secret_access_key")
 
-    def auth_graphql(self, **params):
+    def role_graphql(self, **params):
         schema = Schema(
             query=Query,
             mutation=Mutations,
@@ -63,18 +62,14 @@ class Auth(object):
 
     @staticmethod
     def isAuthorized(event, logger):
-        BaseModel.Meta.region = os.getenv("REGIONNAME")
-        # BaseModel.Meta.aws_access_key_id = os.getenv("aws_access_key_id")
-        # BaseModel.Meta.aws_secret_access_key = os.getenv("aws_secret_access_key")
-
         uid = event["requestContext"]["authorizer"]["claims"]["sub"]
         area = event["pathParameters"]["area"]
-        # method = event["httpMethod"]
         contentType = event["headers"]["Content-Type"]
         endpoint_id = event["pathParameters"]["endpoint_id"]
         funct = event["pathParameters"]["proxy"]
         path = f"/{area}/{endpoint_id}/{funct}"
         body = event["body"]
+        # method = event["httpMethod"]
 
         logger.info("SilvaEngine Auth isAuthorized")
         logger.info(event)
@@ -101,6 +96,8 @@ class Auth(object):
                     .lower()
                 )
 
+                logger.info(fn)
+
                 if fn in fields["mutation"]:
                     if operation.lower() == "create":
                         permission += 1
@@ -110,6 +107,8 @@ class Auth(object):
                         permission += 8
         elif "query" in fields:  # @TODO: Check query fields permission
             permission += 2
+
+        logger.info(permission)
 
         if not uid or not path or not permission:
             return False
@@ -136,9 +135,10 @@ class Auth(object):
         for role in roles:
             if len(role.permissions) > 0:
                 for rule in role.permissions:
+                    logger.info(rule.get("permission"))
                     if (
                         rule.get("resource_id") == resourceId
-                        and rule.get("permission") & permission
+                        and int(rule.get("permission")) & permission
                     ):
                         return True
 
