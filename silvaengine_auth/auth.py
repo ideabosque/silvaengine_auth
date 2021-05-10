@@ -75,10 +75,10 @@ class Auth(object):
         logger.info(event)
 
         if content_type.strip().lower() == "application/json":
-            bodyJSON = json.loads(body)
+            body_json = json.loads(body)
 
-            if "query" in bodyJSON:
-                body = bodyJSON["query"]
+            if "query" in body_json:
+                body = body_json["query"]
 
         # Parse the graphql request's body to AST and extract fields from the AST
         # extract_fields_from_ast(schema, operation, deepth)
