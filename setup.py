@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from setuptools.command.install import install
 
 setup(
     name="SilvaEngine-Auth",
@@ -13,6 +14,7 @@ setup(
     platforms="Linux",
     install_requires=[
         "SilvaEngine-Utility",
+        "SilvaEngine-Resource",
         "graphene",
         "pynamodb",
     ],

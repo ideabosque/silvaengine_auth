@@ -48,6 +48,12 @@ def delete_role_handler(role_input):
     print(res)
 
 
+def add_resource():
+    with open("f:\install.log", "a") as fd:
+        print("mtest")
+        fd.write("Test\n")
+
+
 def insert_update_resource(resource_input):
     # insert == create
     # update == update

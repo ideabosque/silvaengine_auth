@@ -3,7 +3,7 @@
 __author__ = "bibow"
 
 __all__ = [
-    "auth",
+    "main",
     "types",
     "models",
     "schema",
@@ -12,7 +12,7 @@ __all__ = [
     "utils",
     "handlers",
 ]
-from .auth import *
+from .main import *
 from .types import *
 from .models import *
 from .schema import *

@@ -63,6 +63,9 @@ class Auth(object):
     @staticmethod
     def is_authorized(event, logger):
         uid = event["requestContext"]["authorizer"]["claims"]["sub"]
+        role_id = event["requestContext"]["authorizer"]["claims"][
+            "custom:custom:role_id"
+        ]
         area = event["pathParameters"]["area"]
         content_type = event["headers"]["Content-Type"]
         endpoint_id = event["pathParameters"]["endpoint_id"]
@@ -83,9 +86,10 @@ class Auth(object):
         # Parse the graphql request's body to AST and extract fields from the AST
         # extract_fields_from_ast(schema, operation, deepth)
         # operation = [mutation | query]
-        # create - 1, read - 2, update - 4, delete - 8
+        # create - 1, read - 2, update - 4, delete - 8 crud
         permission = 0
         fields = extract_fields_from_ast(body, deepth=1)
+        # {"mutation": ["createRole", "udpateRole", ....]}
 
         if "mutation" in fields:
             # create - 1, read - 2, update = 4, delete = 8
@@ -96,8 +100,6 @@ class Auth(object):
                     .lower()
                 )
 
-                logger.info(fn)
-
                 if fn in fields["mutation"]:
                     if operation.lower() == "create":
                         permission += 1
@@ -107,8 +109,6 @@ class Auth(object):
                         permission += 8
         elif "query" in fields:  # @TODO: Check query fields permission
             permission += 2
-
-        logger.info(permission)
 
         if not uid or not path or not permission:
             return False
@@ -127,19 +127,30 @@ class Auth(object):
         if not resource_id:
             return False
 
-        # 2. Fetch role by user id
-        roles = RoleModel.scan(RoleModel.user_ids.contains(uid))
-
-        # 3. Check the path of request is be contained  by the permissions of role
-        # 3.1 If the path has exist, compare their permission
-        for role in roles:
-            if len(role.permissions) > 0:
+        # Check the path of request is be contained  by the permissions of role
+        # If the path has exist, compare their permission
+        def check_permission(role, permission) -> bool:
+            if role and len(role.permissions) > 0:
                 for rule in role.permissions:
-                    logger.info(rule.get("permission"))
                     if (
                         rule.get("resource_id") == resource_id
                         and int(rule.get("permission")) & permission
                     ):
                         return True
+            return False
+
+        # If user has role id, use the role id to findout their permission
+        if role_id:
+            role = RoleModel().get(role_id)
+
+            return check_permission(role, permission)
+
+        # If user has not role id, then use the user id to find their role & traverse their role permission to calculate the permission
+        roles = RoleModel.scan(RoleModel.user_ids.contains(uid))
+        role = RoleModel().get(role_id)
+
+        for role in roles:
+            if check_permission(role, permission):
+                return True
 
         return False
