@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-__author__ = "bibow"
+__author__ = "bl"
 
 import os
 from pynamodb.models import Model

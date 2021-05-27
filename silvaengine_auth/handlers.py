@@ -1,4 +1,4 @@
-from .models import BaseModel, ResourceModel, RoleModel
+from .models import ResourceModel, RoleModel
 from datetime import datetime
 import uuid
 

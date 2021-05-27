@@ -2,14 +2,37 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-__author__ = "bibow"
+__author__ = "bl"
 
 from graphene import Schema
 from silvaengine_utility import Utility
 from .schema import Query, Mutations, type_class
-from .models import BaseModel, ResourceModel, RoleModel
+from .models import ResourceModel, RoleModel
 from .utils import extract_fields_from_ast
 import json, os
+
+# Module profile
+def profile() -> list:
+    return [
+        {
+            "service": "permissions",
+            "class": "Auth",
+            "functions": {
+                "role_graphql": {
+                    "is_static": True,
+                    "label": "Permissions",
+                    "create": ["createRole"],
+                    "update": ["updateRole"],
+                    "delete": ["deleteRole"],
+                    "query": ["resources", "roles"],
+                    "type": "RequestResponse",
+                    "support_methods": ["post"],
+                    "is_auth_required": True,
+                    "is_graphql": True,
+                }
+            },
+        }
+    ]
 
 
 class Auth(object):
