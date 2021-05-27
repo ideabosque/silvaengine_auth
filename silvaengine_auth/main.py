@@ -58,30 +58,37 @@ class Auth(object):
 
         ctx = {"logger": self.logger}
         variables = params.get("variables", {})
-
-        # query
         query = params.get("query")
-
         if query is not None:
-            result = schema.execute(query, context_value=ctx, variable_values=variables)
-
-        # insert / update / delete
+            execution_result = schema.execute(
+                query, context_value=ctx, variable_values=variables
+            )
         mutation = params.get("mutation")
-
         if mutation is not None:
-            result = schema.execute(
+            execution_result = schema.execute(
                 mutation, context_value=ctx, variable_values=variables
             )
 
-        # response
-        response = {
-            "data": dict(result.data) if result.data != None else None,
-        }
+        if not execution_result:
+            return None
 
-        if result.errors != None:
-            response["errors"] = [str(error) for error in result.errors]
+        status_code = 400 if execution_result.invalid else 200
+        if execution_result.errors:
+            return Utility.json_dumps(
+                {
+                    "errors": [
+                        Utility.format_error(e) for e in execution_result.errors
+                    ],
+                    "status_code": status_code,
+                }
+            )
 
-        return Utility.json_dumps(response)
+        return Utility.json_dumps(
+            {
+                "data": execution_result.data,
+                "status_code": status_code,
+            }
+        )
 
     @staticmethod
     def is_authorized(event, logger):
