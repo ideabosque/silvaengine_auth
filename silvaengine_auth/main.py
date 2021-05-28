@@ -11,8 +11,8 @@ from .models import ResourceModel, RoleModel
 from .utils import extract_fields_from_ast
 import json, os
 
-# Module profile
-def profile() -> list:
+# Hook function applied to deployment
+def deploy() -> list:
     return [
         {
             "service": "permissions",
