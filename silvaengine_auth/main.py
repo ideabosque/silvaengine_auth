@@ -92,22 +92,45 @@ class Auth(object):
 
     @staticmethod
     def is_authorized(event, logger):
-        uid = event["requestContext"]["authorizer"]["claims"]["sub"]
-        role_id = event["requestContext"]["authorizer"]["claims"][
-            "custom:custom:role_id"
-        ]
-        area = event["pathParameters"]["area"]
-        content_type = event["headers"]["Content-Type"]
-        endpoint_id = event["pathParameters"]["endpoint_id"]
-        funct = event["pathParameters"]["proxy"]
-        path = f"/{area}/{endpoint_id}/{funct}"
-        body = event["body"]
-        # method = event["httpMethod"]
-
         logger.info("SilvaEngine Auth isAuthorized")
         logger.info(event)
 
-        if content_type.strip().lower() == "application/json":
+        if (
+            not event.get("requestContext")
+            or not event.get("pathParameters")
+            or not event.get("pathParameters").get("proxy")
+            or not event.get("headers")
+            or not event.get("body")
+            or not event.get("fnConfigurations")
+            or not event.get("requestContext").get("authorizer")
+            or not event.get("requestContext").get("authorizer").get("claims")
+            or not event.get("requestContext")
+            .get("authorizer")
+            .get("claims")
+            .get("sub")
+        ):
+            return False
+
+        uid = event.get("requestContext").get("authorizer").get("claims").get("sub")
+        role_id = (
+            event.get("requestContext")
+            .get("authorizer")
+            .get("claims")
+            .get("custom:custom:role_id")
+        )
+        body = event.get("body")
+        function_name = event.get("pathParameters").get("proxy").strip()
+        function_config = event.get("fnConfigurations")
+        content_type = event.get("headers").get("Content-Type")
+        area = event.get("pathParameters").get("area")
+        endpoint_id = event.get("pathParameters").get("endpoint_id")
+        path = f"/{area}/{endpoint_id}/{function_name}"
+
+        # method = event["httpMethod"]
+
+        print("Auth test")
+
+        if content_type and content_type.strip().lower() == "application/json":
             body_json = json.loads(body)
 
             if "query" in body_json:
@@ -119,40 +142,62 @@ class Auth(object):
         # create - 1, read - 2, update - 4, delete - 8 crud
         permission = 0
         fields = extract_fields_from_ast(body, deepth=1)
-        # {"mutation": ["createRole", "udpateRole", ....]}
 
         if "mutation" in fields:
-            # create - 1, read - 2, update = 4, delete = 8
-            for operation in event["fnConfigurations"].config.mutations:
-                fn = (
-                    (event["fnConfigurations"].config.mutations[operation])
-                    .strip()
-                    .lower()
-                )
+            if not function_config.get("config") or not function_config.get(
+                "config"
+            ).get("mutations"):
+                return False
 
-                if fn in fields["mutation"]:
-                    if operation.lower() == "create":
-                        permission += 1
-                    elif operation.lower() == "update":
-                        permission += 4
-                    elif operation.lower() == "delete":
-                        permission += 8
+            mutations = function_config.get("config").get("mutations")
+
+            # create - 1, read - 2, update = 4, delete = 8
+            for operation, functions in mutations.items():
+                if type(functions) is not list or len(functions) < 1:
+                    continue
+
+                for fn in functions:
+                    fn = (
+                        (event["fnConfigurations"].config.mutations[operation])
+                        .strip()
+                        .lower()
+                    )
+
+                    if fn in fields["mutation"]:
+                        if operation.lower() == "create":
+                            permission += 1
+                        elif operation.lower() == "update":
+                            permission += 4
+                        elif operation.lower() == "delete":
+                            permission += 8
         elif "query" in fields:  # @TODO: Check query fields permission
             permission += 2
 
-        if not uid or not path or not permission:
+        if (
+            not permission
+            or not function_config.get("config")
+            or not function_config.get("config").get("module_name")
+            or not function_config.get("config").get("class_name")
+        ):
             return False
 
         # 1. Fetch resource by request path
         # TODO: Use index query to instead of the scan
-        resources = [
-            resource for resource in ResourceModel.scan(ResourceModel.path == path)
-        ]
+        resource_id = "{}-{}-{}".format(
+            function_config.get("config").get("module_name").strip(),
+            function_config.get("config").get("class_name").strip(),
+            function_name,
+        ).lower()
+        # resources = [
+        #     # resource for resource in ResourceModel.scan(ResourceModel.path == path)
+        #     resource
+        #     for resource in ResourceModel.query(None, None, ResourceModel.path == path)
+        # ]
 
-        if len(resources) < 1:
-            return False
+        # if len(resources) < 1:
+        #     return False
 
-        resource_id = resources.pop().resource_id
+        # resource_id = resources.pop().resource_id
 
         if not resource_id:
             return False
