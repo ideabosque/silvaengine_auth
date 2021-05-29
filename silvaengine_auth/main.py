@@ -9,7 +9,8 @@ from silvaengine_utility import Utility
 from .schema import Query, Mutations, type_class
 from .models import ResourceModel, RoleModel
 from .utils import extract_fields_from_ast
-import json, os
+from hashlib import md5
+import json
 
 # Hook function applied to deployment
 def deploy() -> list:
@@ -124,11 +125,8 @@ class Auth(object):
         content_type = event.get("headers").get("Content-Type")
         area = event.get("pathParameters").get("area")
         endpoint_id = event.get("pathParameters").get("endpoint_id")
-        path = f"/{area}/{endpoint_id}/{function_name}"
-
+        # path = f"/{area}/{endpoint_id}/{function_name}"
         # method = event["httpMethod"]
-
-        print("Auth test")
 
         if content_type and content_type.strip().lower() == "application/json":
             body_json = json.loads(body)
@@ -140,30 +138,23 @@ class Auth(object):
         # extract_fields_from_ast(schema, operation, deepth)
         # operation = [mutation | query]
         # create - 1, read - 2, update - 4, delete - 8 crud
+        if not function_config.config.operations:
+            return False
+
+        operations = function_config.config.operations
         permission = 0
         fields = extract_fields_from_ast(body, deepth=1)
 
         if "mutation" in fields:
-            if not function_config.get("config") or not function_config.get(
-                "config"
-            ).get("mutations"):
-                return False
+            # create - 1, query - 2, update = 4, delete = 8
+            for operation in operations:
+                functions = operations[operation]
 
-            mutations = function_config.get("config").get("mutations")
-
-            # create - 1, read - 2, update = 4, delete = 8
-            for operation, functions in mutations.items():
                 if type(functions) is not list or len(functions) < 1:
                     continue
 
                 for fn in functions:
-                    fn = (
-                        (event["fnConfigurations"].config.mutations[operation])
-                        .strip()
-                        .lower()
-                    )
-
-                    if fn in fields["mutation"]:
+                    if fn.strip().lower() in fields.get("mutation"):
                         if operation.lower() == "create":
                             permission += 1
                         elif operation.lower() == "update":
@@ -171,23 +162,33 @@ class Auth(object):
                         elif operation.lower() == "delete":
                             permission += 8
         elif "query" in fields:  # @TODO: Check query fields permission
-            permission += 2
+            if (
+                operations.query
+                and type(operations.query) is list
+                and len(operations.query) > 0
+            ):
+                for fn in operations.query:
+                    if fn.strip().lower() in fields.get("query"):
+                        permission += 2
+            else:
+                permission += 2
 
         if (
             not permission
-            or not function_config.get("config")
-            or not function_config.get("config").get("module_name")
-            or not function_config.get("config").get("class_name")
+            or not function_config.config
+            or not function_config.config.module_name
+            or not function_config.config.class_name
         ):
             return False
 
         # 1. Fetch resource by request path
         # TODO: Use index query to instead of the scan
-        resource_id = "{}-{}-{}".format(
-            function_config.get("config").get("module_name").strip(),
-            function_config.get("config").get("class_name").strip(),
+        factor = "{}-{}-{}".format(
+            function_config.config.module_name.strip(),
+            function_config.config.class_name.strip(),
             function_name,
         ).lower()
+        resource_id = md5(factor.encode(encoding="UTF-8")).hexdigest()
         # resources = [
         #     # resource for resource in ResourceModel.scan(ResourceModel.path == path)
         #     resource
@@ -198,9 +199,6 @@ class Auth(object):
         #     return False
 
         # resource_id = resources.pop().resource_id
-
-        if not resource_id:
-            return False
 
         # Check the path of request is be contained  by the permissions of role
         # If the path has exist, compare their permission
@@ -215,6 +213,7 @@ class Auth(object):
             return False
 
         # If user has role id, use the role id to findout their permission
+
         if role_id:
             role = RoleModel().get(role_id)
 
@@ -222,7 +221,6 @@ class Auth(object):
 
         # If user has not role id, then use the user id to find their role & traverse their role permission to calculate the permission
         roles = RoleModel.scan(RoleModel.user_ids.contains(uid))
-        role = RoleModel().get(role_id)
 
         for role in roles:
             if check_permission(role, permission):
