@@ -26,7 +26,7 @@ def deploy() -> list:
                     "delete": ["deleteRole"],
                     "query": ["resources", "roles"],
                     "type": "RequestResponse",
-                    "support_methods": ["post"],
+                    "support_methods": ["POST"],
                     "is_auth_required": True,
                     "is_graphql": True,
                 }
