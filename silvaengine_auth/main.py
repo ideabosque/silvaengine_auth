@@ -7,7 +7,7 @@ __author__ = "bl"
 from graphene import Schema
 from silvaengine_utility import Utility
 from .schema import Query, Mutations, type_class
-from .models import ResourceModel, RoleModel
+from .models import RoleModel
 from .utils import extract_fields_from_ast
 from hashlib import md5
 import json
@@ -93,9 +93,6 @@ class Auth(object):
 
     @staticmethod
     def is_authorized(event, logger):
-        logger.info("SilvaEngine Auth isAuthorized")
-        logger.info(event)
-
         if (
             not event.get("requestContext")
             or not event.get("pathParameters")
@@ -123,8 +120,8 @@ class Auth(object):
         function_name = event.get("pathParameters").get("proxy").strip()
         function_config = event.get("fnConfigurations")
         content_type = event.get("headers").get("Content-Type")
-        area = event.get("pathParameters").get("area")
-        endpoint_id = event.get("pathParameters").get("endpoint_id")
+        # area = event.get("pathParameters").get("area")
+        # endpoint_id = event.get("pathParameters").get("endpoint_id")
         # path = f"/{area}/{endpoint_id}/{function_name}"
         # method = event["httpMethod"]
 

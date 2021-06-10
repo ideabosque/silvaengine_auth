@@ -4,15 +4,11 @@ from __future__ import print_function
 
 __author__ = "bl"
 
-import traceback, uuid
-from datetime import datetime
-from graphene import ObjectType, String, Int, List, Field, Schema, Mutation
-from silvaengine_utility import Utility
+from graphene import ObjectType, String, Int, List, Schema
 from .types import (
     ResourceType,
     RoleType,
 )
-from .models import BaseModel, ResourceModel, RoleModel
 from .queries import resolve_resources, resolve_roles
 from .mutations import CreateRole, UpdateRole, DeleteRole
 

@@ -1,14 +1,6 @@
-from graphene import ObjectType, String, Int, List, Field, Schema, Mutation
 from silvaengine_utility import Utility
-from .types import (
-    ResourceType,
-    RoleType,
-    ResourceInputType,
-    RoleInputType,
-    PermissionType,
-    PermissionInputType,
-)
-from .models import BaseModel, ResourceModel, RoleModel
+from .types import ResourceType, RoleType
+from .models import ResourceModel, RoleModel
 
 
 def resolve_resources(info, **kwargs):
@@ -60,7 +52,7 @@ def resolve_roles(info, **kwargs):
     role_id = kwargs.get("role_id")
 
     if role_id is not None:
-        role = RolesModel.get(role_id)
+        role = RoleModel.get(role_id)
 
         return [
             RoleType(

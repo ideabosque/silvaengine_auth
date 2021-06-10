@@ -1,15 +1,7 @@
 import traceback
-from graphene import ObjectType, String, Int, List, Field, Schema, Mutation
+from graphene import Field, Mutation
 from silvaengine_utility import Utility
-from .types import (
-    ResourceType,
-    RoleType,
-    ResourceInputType,
-    RoleInputType,
-    PermissionType,
-    PermissionInputType,
-)
-from .models import BaseModel, ResourceModel, RoleModel
+from .types import RoleType, RoleInputType
 from .handlers import create_role_handler, update_role_handler, delete_role_handler
 
 # Append or modify role info.
