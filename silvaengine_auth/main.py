@@ -22,10 +22,13 @@ def deploy() -> list:
                 "role_graphql": {
                     "is_static": True,
                     "label": "Permissions",
-                    "create": ["createRole"],
-                    "update": ["updateRole"],
-                    "delete": ["deleteRole"],
-                    "query": ["resources", "roles"],
+                    "create": [{"action": "createRole", "label": "Create Role"}],
+                    "update": [{"action": "updateRole", "label": "Modify Role"}],
+                    "delete": [{"action": "deleteRole", "label": "Delete Role"}],
+                    "query": [
+                        {"action": "resources", "label": "View Resources"},
+                        {"action": "roles", "label": "View Roles"},
+                    ],
                     "type": "RequestResponse",
                     "support_methods": ["POST"],
                     "is_auth_required": True,
@@ -74,13 +77,14 @@ class Auth(object):
             return None
 
         status_code = 400 if execution_result.invalid else 200
+
         if execution_result.errors:
             return Utility.json_dumps(
                 {
                     "errors": [
                         Utility.format_error(e) for e in execution_result.errors
                     ],
-                    "status_code": status_code,
+                    "status_code": 500,
                 }
             )
 
