@@ -10,9 +10,8 @@ from pynamodb.attributes import (
     ListAttribute,
     MapAttribute,
     UnicodeAttribute,
-    UnicodeSetAttribute,
+    BooleanAttribute,
     UTCDateTimeAttribute,
-    NumberAttribute,
 )
 
 
@@ -36,18 +35,6 @@ class TraitModel(BaseModel):
     updated_by = UnicodeAttribute()
 
 
-class ResourceModel(TraitModel):
-    class Meta(TraitModel.Meta):
-        table_name = "se-resources"
-
-    resource_id = UnicodeAttribute(hash_key=True)
-    service = UnicodeAttribute(range_key=True)
-    path = UnicodeAttribute()
-    name = UnicodeAttribute()
-    status = NumberAttribute()
-    # action = UnicodeAttribute()
-
-
 class RoleModel(TraitModel):
     class Meta(TraitModel.Meta):
         table_name = "se-roles"
@@ -55,4 +42,6 @@ class RoleModel(TraitModel):
     role_id = UnicodeAttribute(hash_key=True)
     name = UnicodeAttribute()
     permissions = ListAttribute(of=MapAttribute)
+    description = UnicodeAttribute()
+    is_admin = BooleanAttribute()
     user_ids = ListAttribute()

@@ -4,14 +4,15 @@ from __future__ import print_function
 
 __author__ = "bl"
 
-from graphene import (
-    ObjectType,
-    InputObjectType,
-    String,
-    DateTime,
-    List,
-    Int,
-)
+from graphene import ObjectType, InputObjectType, String, DateTime, List, Int, Field
+
+
+class LastEvaluatedKey(ObjectType):
+    hash_key = String()
+
+
+class PageInputType(InputObjectType):
+    hash_key = String()
 
 
 class PermissionType(ObjectType):
@@ -24,18 +25,6 @@ class PermissionInputType(InputObjectType):
     permission = Int()
 
 
-class ResourceType(ObjectType):
-    resource_id = String()
-    service = String()
-    path = String()
-    name = String()
-    status = Int()
-    created_at = DateTime()
-    updated_at = DateTime()
-    updated_by = String()
-    last_evaluated_key = String()
-
-
 class RoleType(ObjectType):
     role_id = String()
     name = String()
@@ -44,16 +33,11 @@ class RoleType(ObjectType):
     created_at = DateTime()
     updated_at = DateTime()
     updated_by = String()
-    last_evaluated_key = String()
 
 
-class ResourceInputType(InputObjectType):
-    resource_id = String()
-    service = String()
-    path = String()
-    name = String()
-    status = Int()
-    updated_by = String()
+class RolesType(ObjectType):
+    items = List(RoleType)
+    last_evaluated_key = Field(LastEvaluatedKey)
 
 
 class RoleInputType(InputObjectType):

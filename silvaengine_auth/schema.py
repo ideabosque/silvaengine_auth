@@ -4,65 +4,27 @@ from __future__ import print_function
 
 __author__ = "bl"
 
-from graphene import ObjectType, String, Int, List, Schema
-from .types import (
-    ResourceType,
-    RoleType,
-)
-from .queries import resolve_resources, resolve_roles
+from graphene import ObjectType, String, Int, Schema, Field
+from .types import RolesType, PageInputType
+from .queries import resolve_roles
 from .mutations import CreateRole, UpdateRole, DeleteRole
 
 
 def type_class():
-    return [ResourceType, RoleType]
+    return [RolesType]
 
 
 # Query resource or role list
 class Query(ObjectType):
-    resources = List(
-        ResourceType,
+    roles = Field(
+        RolesType,
         limit=Int(),
-        last_evaluated_key=String(),
-        resource_id=String(),
-    )
-
-    roles = List(
-        RoleType,
-        limit=Int(),
-        last_evaluated_key=String(),
+        last_evaluated_key=PageInputType(),
         role_id=String(),
     )
 
-    def resolve_resources(self, info, **kwargs):
-        return resolve_resources(info, **kwargs)
-
     def resolve_roles(self, info, **kwargs):
         return resolve_roles(info, **kwargs)
-
-
-# Append or modify resource info.
-# class InsertUpdateResource(Mutation):
-#     resource = Field(ResourceType)
-
-#     class Arguments:
-#         resource_input = ResourceInputType(required=True)
-
-#     @staticmethod
-#     def mutate(root, info, resource_input=None):
-#         try:
-#             _resource = insert_update_resource(resource_input)
-
-#             resource = ResourceType(
-#                 **Utility.json_loads(
-#                     Utility.json_dumps(_resource.__dict__["attribute_values"])
-#                 )
-#             )
-#         except Exception:
-#             log = traceback.format_exc()
-#             info.context.get("logger").exception(log)
-#             raise
-
-#         return InsertUpdateResource(resource=resource)
 
 
 class Mutations(ObjectType):

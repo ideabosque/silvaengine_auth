@@ -25,10 +25,7 @@ def deploy() -> list:
                     "create": [{"action": "createRole", "label": "Create Role"}],
                     "update": [{"action": "updateRole", "label": "Modify Role"}],
                     "delete": [{"action": "deleteRole", "label": "Delete Role"}],
-                    "query": [
-                        {"action": "resources", "label": "View Resources"},
-                        {"action": "roles", "label": "View Roles"},
-                    ],
+                    "query": [{"action": "roles", "label": "View Roles"}],
                     "type": "RequestResponse",
                     "support_methods": ["POST"],
                     "is_auth_required": True,
@@ -190,16 +187,6 @@ class Auth(object):
             function_name,
         ).lower()
         resource_id = md5(factor.encode(encoding="UTF-8")).hexdigest()
-        # resources = [
-        #     # resource for resource in ResourceModel.scan(ResourceModel.path == path)
-        #     resource
-        #     for resource in ResourceModel.query(None, None, ResourceModel.path == path)
-        # ]
-
-        # if len(resources) < 1:
-        #     return False
-
-        # resource_id = resources.pop().resource_id
 
         # Check the path of request is be contained  by the permissions of role
         # If the path has exist, compare their permission

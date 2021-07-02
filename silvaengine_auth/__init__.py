@@ -12,11 +12,12 @@ __all__ = [
     "utils",
     "handlers",
 ]
-from .main import *
-from .types import *
-from .models import *
-from .schema import *
-from .utils import *
-from .queries import *
-from .mutations import *
-from .handlers import *
+from .main import Auth, deploy
+
+# from .types import *
+# from .models import *
+# from .schema import *
+# from .utils import *
+# from .queries import *
+# from .mutations import *
+# from .handlers import *
