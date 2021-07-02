@@ -8,8 +8,6 @@ def resolve_roles(info, **kwargs):
     last_evaluated_key = kwargs.get("last_evaluated_key")
     role_id = kwargs.get("role_id")
 
-    print(last_evaluated_key)
-
     if role_id is not None:
         role = RoleModel.get(role_id)
 
@@ -22,9 +20,23 @@ def resolve_roles(info, **kwargs):
         ]
 
     if last_evaluated_key is not None:
+        values = {}
+
+        for k, v in last_evaluated_key.items():
+            key = k.lower()
+
+            if key == "hash_key" and RoleModel._hash_keyname is not None:
+                values[RoleModel._hash_keyname] = {
+                    RoleModel._hash_key_attribute().attr_type[0]: v
+                }
+            elif key == "range_key" and RoleModel._range_keyname is not None:
+                values[RoleModel._range_keyname] = {
+                    RoleModel._range_key_attribute().attr_type[0]: v
+                }
+
         results = RoleModel.scan(
             limit=int(limit),
-            last_evaluated_key=Utility.json_loads(last_evaluated_key),
+            last_evaluated_key=values,
         )
     else:
         results = RoleModel.scan(limit=int(limit))
