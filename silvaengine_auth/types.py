@@ -9,10 +9,12 @@ from graphene import ObjectType, InputObjectType, String, DateTime, List, Int, F
 
 class LastEvaluatedKey(ObjectType):
     hash_key = String()
+    range_key = String()
 
 
 class PageInputType(InputObjectType):
     hash_key = String()
+    range_key = String()
 
 
 class PermissionType(ObjectType):

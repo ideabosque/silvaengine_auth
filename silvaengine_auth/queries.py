@@ -4,11 +4,35 @@ from .models import RoleModel
 
 
 def resolve_roles(info, **kwargs):
+    def get_value(results, key, data_type) -> str:
+        if (
+            results
+            and key
+            and data_type
+            and results.get(key)
+            and results.get(key).get(data_type)
+        ):
+            return results.get(key).get(data_type)
+
+        return ""
+
     limit = kwargs.get("limit")
     last_evaluated_key = kwargs.get("last_evaluated_key")
     role_id = kwargs.get("role_id")
+    hash_key_field_name = RoleModel._hash_keyname
+    range_key_field_name = RoleModel._range_keyname
+    hash_key_field_data_type = (
+        RoleModel._hash_key_attribute().attr_type[0].upper()
+        if RoleModel._hash_key_attribute()
+        else None
+    )
+    range_key_field_data_type = (
+        RoleModel._range_key_attribute().attr_type[0].upper()
+        if RoleModel._range_key_attribute()
+        else None
+    )
 
-    if role_id is not None:
+    if role_id:
         role = RoleModel.get(role_id)
 
         return [
@@ -19,20 +43,20 @@ def resolve_roles(info, **kwargs):
             )
         ]
 
-    if last_evaluated_key is not None:
+    if last_evaluated_key:
         values = {}
 
         for k, v in last_evaluated_key.items():
             key = k.lower()
 
-            if key == "hash_key" and RoleModel._hash_keyname is not None:
-                values[RoleModel._hash_keyname] = {
-                    RoleModel._hash_key_attribute().attr_type[0]: v
-                }
-            elif key == "range_key" and RoleModel._range_keyname is not None:
-                values[RoleModel._range_keyname] = {
-                    RoleModel._range_key_attribute().attr_type[0]: v
-                }
+            if key == "hash_key" and hash_key_field_name and hash_key_field_data_type:
+                values[hash_key_field_name] = {hash_key_field_data_type: v}
+            elif (
+                key == "range_key"
+                and range_key_field_name
+                and range_key_field_data_type
+            ):
+                values[range_key_field_name] = {range_key_field_data_type: v}
 
         results = RoleModel.scan(
             limit=int(limit),
@@ -42,6 +66,9 @@ def resolve_roles(info, **kwargs):
         results = RoleModel.scan(limit=int(limit))
 
     roles = [role for role in results]
+
+    if results.total_count < 1:
+        return None
 
     return RolesType(
         items=[
@@ -53,6 +80,15 @@ def resolve_roles(info, **kwargs):
             for role in roles
         ],
         last_evaluated_key=LastEvaluatedKey(
-            hash_key=results.last_evaluated_key.get("role_id").get("S"),
+            hash_key=get_value(
+                results.last_evaluated_key,
+                hash_key_field_name,
+                hash_key_field_data_type,
+            ),
+            range_key=get_value(
+                results.last_evaluated_key,
+                range_key_field_name,
+                range_key_field_data_type,
+            ),
         ),
     )

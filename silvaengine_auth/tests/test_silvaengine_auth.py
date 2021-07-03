@@ -59,7 +59,9 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
         variables = {
             "limit": 1,
-            "lastEvaluatedKey": {"hashKey": "11ef4284-da82-11eb-9e1a-0365a5eef1fa"},
+            "lastEvaluatedKey": {
+                "hashKey": "11ef4284-da82-11eb-9e1a-0365a5eef1fa",
+            },
         }
 
         query = """
@@ -82,6 +84,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                     }
                     lastEvaluatedKey {
                         hashKey
+                        rangeKey
                     }
                 }
             }
