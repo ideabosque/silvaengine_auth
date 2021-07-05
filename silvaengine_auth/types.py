@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
+from graphene.types.scalars import Boolean
+
 __author__ = "bl"
 
 from graphene import ObjectType, InputObjectType, String, DateTime, List, Int, Field
@@ -30,7 +32,9 @@ class PermissionInputType(InputObjectType):
 class RoleType(ObjectType):
     role_id = String()
     name = String()
+    description = String()
     permissions = List(PermissionType)
+    is_admin = Boolean()
     user_ids = List(String)
     created_at = DateTime()
     updated_at = DateTime()
