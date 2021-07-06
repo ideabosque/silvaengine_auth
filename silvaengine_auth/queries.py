@@ -18,7 +18,6 @@ def resolve_roles(info, **kwargs):
 
     limit = kwargs.get("limit")
     last_evaluated_key = kwargs.get("last_evaluated_key")
-    role_id = kwargs.get("role_id")
     hash_key_field_name = RoleModel._hash_keyname
     range_key_field_name = RoleModel._range_keyname
     hash_key_field_data_type = (
@@ -31,17 +30,6 @@ def resolve_roles(info, **kwargs):
         if RoleModel._range_key_attribute()
         else None
     )
-
-    if role_id:
-        role = RoleModel.get(role_id)
-
-        return [
-            RoleType(
-                **Utility.json_loads(
-                    Utility.json_dumps(role.__dict__["attribute_values"])
-                )
-            )
-        ]
 
     if last_evaluated_key:
         values = {}
@@ -92,3 +80,16 @@ def resolve_roles(info, **kwargs):
             ),
         ),
     )
+
+
+def resolve_role(info, **kwargs):
+    role_id = kwargs.get("role_id")
+
+    if role_id:
+        role = RoleModel.get(role_id)
+
+        return RoleType(
+            **Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
+        )
+
+    return None

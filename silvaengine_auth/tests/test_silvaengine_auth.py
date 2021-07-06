@@ -35,7 +35,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     def tearDown(self):
         logger.info("Destory SilvaEngineAuthTest ...")
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_graphql_get_resource_or_roles(self):
         # query = """
         #     query getResources(
@@ -57,12 +57,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         #     }
         # # """
 
-        variables = {
-            "limit": 1,
-            "lastEvaluatedKey": {
-                "hashKey": "11ef4284-da82-11eb-9e1a-0365a5eef1fa",
-            },
-        }
+        variables = {"limit": 1}
 
         query = """
             query roles(
@@ -124,6 +119,30 @@ class SilvaEngineAuthTest(unittest.TestCase):
         #     ),
         # }
 
+        payload = {"query": query, "variables": variables}
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    # @unittest.skip("demonstrating skipping")
+    def test_graphql_get_role(self):
+        query = """
+            query role(
+                    $roleId: String
+                ){
+                role(
+                    roleId: $roleId
+                ){
+                    roleId
+                    name
+                    permissions{resourceId, permission}
+                    userIds
+                    createdAt
+                    updatedAt
+                    updatedBy
+                }
+            }
+        """
+        variables = {"roleId": "11ef4284-da82-11eb-9e1a-0365a5eef1fa"}
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
         logger.info(response)
