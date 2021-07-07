@@ -11,7 +11,7 @@ from .mutations import CreateRole, UpdateRole, DeleteRole
 
 
 def type_class():
-    return [RolesType]
+    return [RolesType, RoleType]
 
 
 # Query resource or role list

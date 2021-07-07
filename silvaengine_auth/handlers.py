@@ -10,6 +10,8 @@ def create_role_handler(role_input):
         role_id,
         **{
             "name": role_input.name,
+            "is_admin": role_input.is_admin,
+            "description": role_input.description,
             "permissions": role_input.permissions,
             "user_ids": role_input.user_ids,
             "created_at": datetime.utcnow(),
@@ -31,6 +33,8 @@ def update_role_handler(role_input):
             RoleModel.updated_at.set(datetime.utcnow()),
             RoleModel.updated_by.set(role_input.updated_by),
             RoleModel.name.set(role_input.name),
+            RoleModel.is_admin.set(role_input.is_admin),
+            RoleModel.description.set(role_input.description),
             RoleModel.permissions.set(role_input.permissions),
             RoleModel.user_ids.set(role_input.user_ids),
         ]
@@ -43,9 +47,7 @@ def delete_role_handler(role_input):
 
     # Delete the role record.
 
-    res = RoleModel(role_input.role_id).delete()
-
-    print(res)
+    return RoleModel(role_input.role_id).delete()
 
 
 def add_resource():

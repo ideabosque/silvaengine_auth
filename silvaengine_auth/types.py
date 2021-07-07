@@ -49,6 +49,8 @@ class RolesType(ObjectType):
 class RoleInputType(InputObjectType):
     role_id = String()
     name = String()
+    description = String()
+    is_admin = Boolean()
     permissions = List(PermissionInputType)
     user_ids = List(String)
     updated_by = String()

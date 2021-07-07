@@ -123,7 +123,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_graphql_get_role(self):
         query = """
             query role(
@@ -201,23 +201,25 @@ class SilvaEngineAuthTest(unittest.TestCase):
     # post == insert / create
     # delete == delete
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_create_role(self):
         mutation = """
             mutation createRole(
-                    $roleId: String,
                     $name: String!,
                     $permissions: [PermissionInputType]!,
                     $userIds: [String]!,
                     $updatedBy: String!
+                    $isAdmin: Boolean!
+                    $description: String!
                 ) {
                 createRole(
                     roleInput:{
-                        roleId: $roleId,
                         name: $name,
                         permissions: $permissions,
                         userIds: $userIds,
                         updatedBy: $updatedBy
+                        isAdmin: $isAdmin,
+                        description: $description
                     }
                 ) {
                     role{
@@ -228,6 +230,8 @@ class SilvaEngineAuthTest(unittest.TestCase):
                         createdAt
                         updatedAt
                         updatedBy
+                        isAdmin
+                        description
                     }
                 }
             }
@@ -239,6 +243,8 @@ class SilvaEngineAuthTest(unittest.TestCase):
             "permissions": [{"resourceId": "Just for test", "permission": 15}],
             "userIds": ["39f3cc57-e5b3-422e-a140-6c316d308b2b"],
             "updatedBy": "23456",
+            "description": "Manager",
+            "isAdmin": True,
         }
 
         payload = {"mutation": mutation, "variables": variables}
