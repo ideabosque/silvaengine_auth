@@ -28,7 +28,7 @@ def deploy() -> list:
                     "query": [{"action": "roles", "label": "View Roles"}],
                     "type": "RequestResponse",
                     "support_methods": ["POST"],
-                    "is_auth_required": True,
+                    "is_auth_required": False,
                     "is_graphql": True,
                 }
             },
