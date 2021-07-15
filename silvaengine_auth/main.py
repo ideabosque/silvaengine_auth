@@ -111,16 +111,21 @@ class Auth(object):
             return False
 
         uid = event.get("requestContext").get("authorizer").get("claims").get("sub")
-        role_id = (
-            event.get("requestContext")
-            .get("authorizer")
-            .get("claims")
-            .get("custom:custom:role_id")
-        )
         body = event.get("body")
         function_name = event.get("pathParameters").get("proxy").strip()
         function_config = event.get("fnConfigurations")
         content_type = event.get("headers").get("Content-Type")
+        role_id = (
+            event.get("requestContext").get("authorizer").get("claims").get("role_id")
+        )
+
+        if role_id is None:
+            role_id = (
+                event.get("requestContext")
+                .get("authorizer")
+                .get("claims")
+                .get("custom:custom:role_id")
+            )
         # area = event.get("pathParameters").get("area")
         # endpoint_id = event.get("pathParameters").get("endpoint_id")
         # path = f"/{area}/{endpoint_id}/{function_name}"

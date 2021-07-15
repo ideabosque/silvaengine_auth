@@ -35,7 +35,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     def tearDown(self):
         logger.info("Destory SilvaEngineAuthTest ...")
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_graphql_get_resource_or_roles(self):
         # query = """
         #     query getResources(
@@ -201,7 +201,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     # post == insert / create
     # delete == delete
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_create_role(self):
         mutation = """
             mutation createRole(
