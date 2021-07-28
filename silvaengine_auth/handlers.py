@@ -372,7 +372,6 @@ def _authorize_response(event, context):
 
         ### 1. Verify source ip
         if _verify_whitelist(event, context):
-            print("Whitelist")
             custom_context = {"is_allowed_by_whitelist": 1}
 
             return response(policy=policy, context=custom_context)
