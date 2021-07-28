@@ -37,7 +37,19 @@ def deploy() -> list:
                     "support_methods": ["POST"],
                     "is_auth_required": False,
                     "is_graphql": True,
-                }
+                },
+                "login_graphql": {
+                    "is_static": False,
+                    "label": "Login",
+                    "create": [],
+                    "update": [],
+                    "delete": [],
+                    "query": [{"action": "certificate", "label": "User Login"}],
+                    "type": "RequestResponse",
+                    "support_methods": ["POST"],
+                    "is_auth_required": False,
+                    "is_graphql": True,
+                },
             },
         }
     ]

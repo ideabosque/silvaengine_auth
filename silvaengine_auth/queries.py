@@ -142,7 +142,7 @@ def _resolve_certificate(info, **kwargs):
             or not app_client_id
             or not app_client_secret
         ):
-            raise Exception("Missing required configuration")
+            raise Exception("Missing required configuration", 400)
 
         cognitoIdp = boto3.client(
             "cognito-idp",
