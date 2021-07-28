@@ -468,7 +468,7 @@ def _get_user_permissions(owner_id, cognito_user_sub):
             return None
 
         for resource in ResourceModel.scan(
-            ResourceModel.resource_id.is_in(resource_ids)
+            ResourceModel.resource_id.is_in(*resource_ids)
         ):
             resources[resource.resource_id] = resource
 
