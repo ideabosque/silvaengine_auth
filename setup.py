@@ -12,11 +12,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms="Linux",
-    install_requires=[
-        "SilvaEngine-Utility",
-        "graphene",
-        "pynamodb",
-    ],
+    install_requires=["SilvaEngine-Utility", "graphene", "pynamodb"],
     classifiers=[
         "Programming Language :: Python",
         "Environment :: Web Environment",

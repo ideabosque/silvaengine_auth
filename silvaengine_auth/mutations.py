@@ -2,9 +2,9 @@ import traceback
 from graphene import Field, Mutation
 from silvaengine_utility import Utility
 from .types import RoleType, RoleInputType
-from .handlers import create_role_handler, update_role_handler, delete_role_handler
+from .handlers import _create_role_handler, _update_role_handler, _delete_role_handler
 
-# Append or modify role info.
+# Append role info.
 class CreateRole(Mutation):
     role = Field(RoleType)
 
@@ -14,21 +14,20 @@ class CreateRole(Mutation):
     @staticmethod
     def mutate(root, info, role_input=None):
         try:
-            _role = create_role_handler(role_input)
+            _role = _create_role_handler(role_input)
             role = RoleType(
                 **Utility.json_loads(
                     Utility.json_dumps(_role.__dict__["attribute_values"])
                 )
             )
-        except Exception:
-            log = traceback.format_exc()
-            info.context.get("logger").exception(log)
-            print("Exception")
-            raise
 
-        return CreateRole(role=role)
+            return CreateRole(role=role)
+        except Exception as e:
+            info.context.get("logger").exception(traceback.format_exc())
+            raise e
 
 
+# Modify role info.
 class UpdateRole(Mutation):
     role = Field(RoleType)
 
@@ -38,21 +37,20 @@ class UpdateRole(Mutation):
     @staticmethod
     def mutate(root, info, role_input=None):
         try:
-            _role = update_role_handler(role_input)
+            _role = _update_role_handler(role_input)
             role = RoleType(
                 **Utility.json_loads(
                     Utility.json_dumps(_role.__dict__["attribute_values"])
                 )
             )
-        except Exception:
-            log = traceback.format_exc()
-            info.context.get("logger").exception(log)
-            print("Exception")
-            raise
 
-        return UpdateRole(role=role)
+            return UpdateRole(role=role)
+        except Exception as e:
+            info.context.get("logger").exception(traceback.format_exc())
+            raise e
 
 
+# Delete role
 class DeleteRole(Mutation):
     role = Field(RoleType)
 
@@ -62,16 +60,8 @@ class DeleteRole(Mutation):
     @staticmethod
     def mutate(root, info, role_input=None):
         try:
-            delete_role_handler(role_input)
-            # role = RoleType(
-            #     **Utility.json_loads(
-            #         Utility.json_dumps(_role.__dict__["attribute_values"])
-            #     )
-            # )
-        except Exception:
-            log = traceback.format_exc()
-            info.context.get("logger").exception(log)
-            print("Exception")
-            raise
-
-        return DeleteRole(role=None)
+            _delete_role_handler(role_input)
+            return DeleteRole(role=None)
+        except Exception as e:
+            info.context.get("logger").exception(traceback.format_exc())
+            raise e

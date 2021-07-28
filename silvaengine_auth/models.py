@@ -12,6 +12,7 @@ from pynamodb.attributes import (
     UnicodeAttribute,
     BooleanAttribute,
     UTCDateTimeAttribute,
+    NumberAttribute,
 )
 
 
@@ -19,11 +20,21 @@ class BaseModel(Model):
     class Meta:
         billing_mode = "PAY_PER_REQUEST"
         region = os.getenv("REGIONNAME")
+        aws_access_key_id = os.getenv("aws_access_key_id")
+        aws_secret_access_key = os.getenv("aws_secret_access_key")
 
-        if not region:
-            region = os.getenv("region_name")
-            aws_access_key_id = os.getenv("aws_access_key_id")
-            aws_secret_access_key = os.getenv("aws_secret_access_key")
+        if region is None or aws_access_key_id is None or aws_secret_access_key is None:
+            from dotenv import load_dotenv
+
+            if load_dotenv():
+                if region is None:
+                    region = os.getenv("region_name")
+
+                if aws_access_key_id is None:
+                    aws_access_key_id = os.getenv("aws_access_key_id")
+
+                if aws_secret_access_key is None:
+                    aws_secret_access_key = os.getenv("aws_secret_access_key")
 
 
 class TraitModel(BaseModel):
@@ -39,9 +50,36 @@ class RoleModel(TraitModel):
     class Meta(TraitModel.Meta):
         table_name = "se-roles"
 
-    role_id = UnicodeAttribute(hash_key=True)
+    owner_id = UnicodeAttribute(hash_key=True)
+    role_id = UnicodeAttribute(range_key=True)
     name = UnicodeAttribute()
     permissions = ListAttribute(of=MapAttribute)
     description = UnicodeAttribute()
     is_admin = BooleanAttribute()
     user_ids = ListAttribute()
+    status = BooleanAttribute(default=True)
+
+
+class ConfigDataModel(BaseModel):
+    class Meta(BaseModel.Meta):
+        table_name = "se-configdata"
+
+    setting_id = UnicodeAttribute(hash_key=True)
+    variable = UnicodeAttribute(range_key=True)
+    value = UnicodeAttribute()
+
+
+class FunctionMap(MapAttribute):
+    aws_lambda_arn = UnicodeAttribute()
+    function = UnicodeAttribute()
+    setting = UnicodeAttribute()
+
+
+class ConnectionModel(BaseModel):
+    class Meta(BaseModel.Meta):
+        table_name = "se-connections"
+
+    endpoint_id = UnicodeAttribute(hash_key=True)
+    api_key = UnicodeAttribute(range_key=True, default="#####")
+    functions = ListAttribute(of=FunctionMap)
+    whitelist = ListAttribute()
