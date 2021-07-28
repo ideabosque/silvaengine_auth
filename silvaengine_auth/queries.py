@@ -165,6 +165,9 @@ def _resolve_certificate(info, **kwargs):
             ClientId=app_client_id,
         )
 
+        if not response.get("AuthenticationResult").get("IdToken"):
+            raise Exception("Failed to sign in on cognito")
+
         # @TODO: hooks
         hooks = (
             [
@@ -181,7 +184,6 @@ def _resolve_certificate(info, **kwargs):
         )
 
         if len(hooks):
-
             for hook in hooks:
                 fragments = hook.split(":", 3)
 

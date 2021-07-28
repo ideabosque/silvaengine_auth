@@ -446,7 +446,7 @@ def _execute_custom_hooks(authorizer):
         raise e
 
 
-def _get_user_permissions(owner_id, cognito_user_sub) -> list:
+def _get_user_permissions(owner_id, cognito_user_sub):
     try:
         rules = []
 
@@ -460,15 +460,18 @@ def _get_user_permissions(owner_id, cognito_user_sub) -> list:
 
         permissions = {}
         resources = {}
+        resource_ids = list(
+            set([str(rule.get("resource_id")).strip() for rule in rules])
+        )
+
+        if len(resource_ids) < 1:
+            return None
 
         for resource in ResourceModel.scan(
-            ResourceModel.resource_id.is_in(
-                *list(set([str(rule.get("resource_id")).strip() for rule in rules]))
-            )
+            ResourceModel.resource_id.is_in(resource_ids)
         ):
             resources[resource.resource_id] = resource
 
-        print(resources)
         result = {}
 
         for rule in rules:
