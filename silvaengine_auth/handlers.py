@@ -302,7 +302,12 @@ def _verify_permission(event, context):
             return False
 
         # Check user's permissions
-        roles = RoleModel.query(owner_id, None, RoleModel.user_ids.contains(uid))
+        roles = [
+            role
+            for role in RoleModel.query(
+                owner_id, None, RoleModel.user_ids.contains(uid)
+            )
+        ]
 
         if owner_id and uid and check_permission(roles, permission):
             additional_context = {
