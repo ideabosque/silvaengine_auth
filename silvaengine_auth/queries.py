@@ -179,11 +179,14 @@ def _resolve_certificate(info, **kwargs):
             if info.context.get("setting").get("custom_signin_hooks")
             else []
         )
+        # hooks = ["relation_engine:RelationEngine:get_relations_for_login"]
         token_claims = jwt.get_unverified_claims(
             response.get("AuthenticationResult").get("IdToken")
         )
 
         if len(hooks):
+            logger = info.context.get("logger")
+
             for hook in hooks:
                 fragments = hook.split(":", 3)
 
@@ -204,7 +207,7 @@ def _resolve_certificate(info, **kwargs):
                 agent = import_module(module_name)
 
                 if hasattr(agent, class_name):
-                    agent = getattr(agent, class_name)()
+                    agent = getattr(agent, class_name)(logger)
 
                 if not hasattr(agent, function_name):
                     continue

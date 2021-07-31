@@ -50,8 +50,8 @@ class RoleModel(TraitModel):
     class Meta(TraitModel.Meta):
         table_name = "se-roles"
 
-    owner_id = UnicodeAttribute(hash_key=True)
-    role_id = UnicodeAttribute(range_key=True)
+    role_id = UnicodeAttribute(hash_key=True)
+    owner_id = UnicodeAttribute()
     name = UnicodeAttribute()
     permissions = ListAttribute(of=MapAttribute)
     description = UnicodeAttribute()

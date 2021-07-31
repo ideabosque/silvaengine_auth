@@ -6,86 +6,97 @@ from jose.constants import ALGORITHMS
 from hashlib import md5
 from importlib.util import find_spec
 from importlib import import_module
-from silvaengine_utility.utility import Utility
+from silvaengine_utility import Utility
 from silvaengine_resource import ResourceModel
-from .utils import extract_fields_from_ast, HttpVerb, AuthPolicy
+from .utils import extract_fields_from_ast, HttpVerb, AuthPolicy, validate_required
 from .models import ConnectionModel, RoleModel, ConfigDataModel
 
 
 def _create_role_handler(role_input):
-    # Insert a role record.
-    assert role_input.owner_id, "Owner id is required"
+    try:
+        validate_required(["owner_id"], role_input)
+        role_id = str(uuid.uuid1())
 
-    role_id = str(uuid.uuid1())
+        RoleModel(
+            role_input.owner_id,
+            **{
+                "name": role_input.name,
+                "role_id": role_id,
+                "is_admin": role_input.is_admin,
+                "description": role_input.description,
+                "permissions": role_input.permissions,
+                "user_ids": role_input.user_ids,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "updated_by": role_input.updated_by,
+                "status": True,
+            },
+        ).save()
 
-    RoleModel(
-        role_input.owner_id,
-        **{
-            "name": role_input.name,
-            "role_id": role_id,
-            "is_admin": role_input.is_admin,
-            "description": role_input.description,
-            "permissions": role_input.permissions,
-            "user_ids": role_input.user_ids,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-            "updated_by": role_input.updated_by,
-            "status": True,
-        },
-    ).save()
-
-    return RoleModel.get(role_input.owner_id, role_id)
+        return RoleModel.get(role_input.owner_id, role_id)
+    except Exception as e:
+        raise e
 
 
 def _update_role_handler(role_input):
-    assert role_input.role_id and role_input.owner_id, "Role id / owner id is required"
+    try:
+        validate_required(["owner_id", "role_id"], role_input)
 
-    # Update the role record.
-    role = RoleModel.get(role_input.owner_id, role_input.role_id)
+        role = RoleModel.get(role_input.owner_id, role_input.role_id)
 
-    role.update(
-        actions=[
-            RoleModel.updated_at.set(datetime.utcnow()),
-            RoleModel.updated_by.set(role_input.updated_by),
-            RoleModel.name.set(role_input.name),
-            RoleModel.is_admin.set(role_input.is_admin),
-            RoleModel.description.set(role_input.description),
-            RoleModel.permissions.set(role_input.permissions),
-            RoleModel.user_ids.set(role_input.user_ids),
-            RoleModel.status.set(role_input.status),
-        ]
-    )
-    return RoleModel.get(role_input.owner_id, role_input.role_id)
+        role.update(
+            actions=[
+                RoleModel.updated_at.set(datetime.utcnow()),
+                RoleModel.updated_by.set(role_input.updated_by),
+                RoleModel.name.set(role_input.name),
+                RoleModel.is_admin.set(role_input.is_admin),
+                RoleModel.description.set(role_input.description),
+                RoleModel.permissions.set(role_input.permissions),
+                RoleModel.user_ids.set(role_input.user_ids),
+                RoleModel.status.set(role_input.status),
+            ]
+        )
+        return RoleModel.get(role_input.owner_id, role_input.role_id)
+    except Exception as e:
+        raise e
 
 
 def _delete_role_handler(role_input):
-    assert role_input.role_id and role_input.owner_id, "Role id / owner id is required"
+    try:
+        validate_required(["owner_id", "role_id"], role_input)
 
-    # Delete the role record.
-    return RoleModel(role_input.owner_id, role_input.role_id).delete()
+        # Delete the role record.
+        return RoleModel(role_input.owner_id, role_input.role_id).delete()
+    except Exception as e:
+        raise e
 
 
 # Verify ip whitelist
 def _verify_whitelist(event, context) -> bool:
-    if (
-        not event.get("requestContext").get("identity").get("sourceIp")
-        or not event.get("requestContext").get("identity").get("apiKey")
-        or not event.get("pathParameters").get("endpoint_id")
-    ):
+    try:
+        if (
+            not event.get("requestContext").get("identity").get("sourceIp")
+            or not event.get("requestContext").get("identity").get("apiKey")
+            or not event.get("pathParameters").get("endpoint_id")
+        ):
+            return False
+
+        endpoint_id = event.get("pathParameters").get("endpoint_id")
+        api_key = event.get("requestContext").get("identity").get("apiKey")
+        connnection = ConnectionModel.get(endpoint_id, api_key)
+
+        if connnection and connnection.whitelist and len(connnection.whitelist):
+            source_ip = (
+                event.get("requestContext").get("identity").get("sourceIp").strip()
+            )
+
+            for ip in connnection.whitelist:
+                if Utility.in_subnet(source_ip, ip.strip()):
+                    return True
+
         return False
-
-    endpoint_id = event.get("pathParameters").get("endpoint_id")
-    api_key = event.get("requestContext").get("identity").get("apiKey")
-    connnection = ConnectionModel.get(endpoint_id, api_key)
-
-    if connnection and connnection.whitelist and len(connnection.whitelist):
-        source_ip = event.get("requestContext").get("identity").get("sourceIp").strip()
-
-        for ip in connnection.whitelist:
-            if Utility.in_subnet(source_ip, ip.strip()):
-                return True
-
-    return False
+    except Exception as e:
+        raise e
 
 
 # Verify token
