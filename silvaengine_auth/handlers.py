@@ -17,8 +17,8 @@ def _create_role_handler(role_input):
         role_id = str(uuid.uuid1())
 
         RoleModel(
-            role_id
-            ** {
+            role_id,
+            **{
                 "name": role_input.name,
                 "owner_id": role_input.owner_id,
                 "is_admin": role_input.is_admin,
