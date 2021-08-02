@@ -125,7 +125,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_graphql_get_role(self):
         query = """
             query role(
@@ -144,7 +144,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                 }
             }
         """
-        variables = {"roleId": "11ef4284-da82-11eb-9e1a-0365a5eef1fa"}
+        variables = {"roleId": "27fae565-efaf-11eb-a5cd-d79a21e9d8bf"}
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
         logger.info(response)
@@ -333,7 +333,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_certificate(self):
         query = """
             query certificate(

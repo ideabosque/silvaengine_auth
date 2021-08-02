@@ -14,14 +14,13 @@ from .models import ConnectionModel, RoleModel, ConfigDataModel
 
 def _create_role_handler(role_input):
     try:
-        validate_required(["owner_id"], role_input)
         role_id = str(uuid.uuid1())
 
         RoleModel(
-            role_input.owner_id,
-            **{
+            role_id
+            ** {
                 "name": role_input.name,
-                "role_id": role_id,
+                "owner_id": role_input.owner_id,
                 "is_admin": role_input.is_admin,
                 "description": role_input.description,
                 "permissions": role_input.permissions,
@@ -33,22 +32,23 @@ def _create_role_handler(role_input):
             },
         ).save()
 
-        return RoleModel.get(role_input.owner_id, role_id)
+        return RoleModel.get(role_id, None)
     except Exception as e:
         raise e
 
 
 def _update_role_handler(role_input):
     try:
-        validate_required(["owner_id", "role_id"], role_input)
+        validate_required(["role_id"], role_input)
 
-        role = RoleModel.get(role_input.owner_id, role_input.role_id)
+        role = RoleModel.get(role_input.role_id, None)
 
         role.update(
             actions=[
                 RoleModel.updated_at.set(datetime.utcnow()),
                 RoleModel.updated_by.set(role_input.updated_by),
                 RoleModel.name.set(role_input.name),
+                RoleModel.owner_id.set(role_input.owner_id),
                 RoleModel.is_admin.set(role_input.is_admin),
                 RoleModel.description.set(role_input.description),
                 RoleModel.permissions.set(role_input.permissions),
@@ -56,17 +56,17 @@ def _update_role_handler(role_input):
                 RoleModel.status.set(role_input.status),
             ]
         )
-        return RoleModel.get(role_input.owner_id, role_input.role_id)
+        return RoleModel.get(role_input.role_id, None)
     except Exception as e:
         raise e
 
 
 def _delete_role_handler(role_input):
     try:
-        validate_required(["owner_id", "role_id"], role_input)
+        validate_required(["role_id"], role_input)
 
         # Delete the role record.
-        return RoleModel(role_input.owner_id, role_input.role_id).delete()
+        return RoleModel(role_input.role_id).delete()
     except Exception as e:
         raise e
 
@@ -220,7 +220,6 @@ def _verify_permission(event, context):
             or not event.get("body")
             or not event.get("fnConfigurations")
             or not event.get("requestContext").get("authorizer").get("sub")
-            or not event.get("requestContext").get("authorizer").get("seller_id")
         ):
             raise Exception("Event is missing required parameters", 500)
 
@@ -230,7 +229,7 @@ def _verify_permission(event, context):
         function_config = event.get("fnConfigurations")
         authorizer = event.get("requestContext").get("authorizer")
         uid = authorizer.get("sub")
-        owner_id = authorizer.get("seller_id")
+        owner_id = authorizer.get("seller_id") if authorizer.get("seller_id") else ""
         body = event.get("body")
         function_name = event.get("pathParameters").get("proxy").strip()
         content_type = headers.get("content-type")
@@ -315,12 +314,12 @@ def _verify_permission(event, context):
         # Check user's permissions
         roles = [
             role
-            for role in RoleModel.query(
-                owner_id, None, RoleModel.user_ids.contains(uid)
+            for role in RoleModel.scan(
+                (RoleModel.owner_id == owner_id) & (RoleModel.user_ids.contains(uid))
             )
         ]
 
-        if owner_id and uid and check_permission(roles, permission):
+        if uid and check_permission(roles, permission):
             additional_context = {
                 "roles": [
                     {"role_id": role.role_id, "name": role.name} for role in roles
@@ -465,12 +464,14 @@ def _execute_custom_hooks(authorizer):
 def _get_user_permissions(owner_id, cognito_user_sub):
     try:
         rules = []
+        owner_id = str(owner_id).strip() if owner_id else ""
 
-        if not owner_id or not cognito_user_sub:
+        if not cognito_user_sub:
             return rules
 
-        for role in RoleModel.query(
-            owner_id, None, RoleModel.user_ids.contains(cognito_user_sub)
+        for role in RoleModel.scan(
+            (RoleModel.owner_id == owner_id)
+            & (RoleModel.user_ids.contains(cognito_user_sub))
         ):
             rules += role.permissions
 
