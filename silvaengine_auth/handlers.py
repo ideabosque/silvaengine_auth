@@ -231,7 +231,11 @@ def _verify_permission(event, context):
         function_config = event.get("fnConfigurations")
         authorizer = event.get("requestContext").get("authorizer")
         uid = authorizer.get("sub")
-        owner_id = authorizer.get("seller_id") if authorizer.get("seller_id") else ""
+        owner_id = (
+            str(authorizer.get("seller_id")).strip()
+            if authorizer.get("seller_id") is not None
+            else "0"
+        )
         body = event.get("body")
         function_name = event.get("pathParameters").get("proxy").strip()
         content_type = headers.get("content-type")
@@ -466,7 +470,7 @@ def _execute_custom_hooks(authorizer):
 def _get_user_permissions(owner_id, cognito_user_sub):
     try:
         rules = []
-        owner_id = str(owner_id).strip() if owner_id else "0"
+        owner_id = str(owner_id).strip() if owner_id is not None else "0"
 
         if not cognito_user_sub:
             return rules
