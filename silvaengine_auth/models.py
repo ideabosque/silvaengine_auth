@@ -51,7 +51,7 @@ class RoleModel(TraitModel):
         table_name = "se-roles"
 
     role_id = UnicodeAttribute(hash_key=True)
-    owner_id = UnicodeAttribute()
+    owner_id = UnicodeAttribute(default="0")
     name = UnicodeAttribute()
     permissions = ListAttribute(of=MapAttribute)
     description = UnicodeAttribute()
