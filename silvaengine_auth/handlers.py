@@ -466,7 +466,7 @@ def _execute_custom_hooks(authorizer):
 def _get_user_permissions(owner_id, cognito_user_sub):
     try:
         rules = []
-        owner_id = str(owner_id).strip() if owner_id else ""
+        owner_id = str(owner_id).strip() if owner_id else "0"
 
         if not cognito_user_sub:
             return rules
