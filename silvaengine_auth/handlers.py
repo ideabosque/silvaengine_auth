@@ -243,16 +243,24 @@ def _verify_permission(event, context):
             else False
         )
         uid = authorizer.get("sub")
-        owner_id = authorizer.get("seller_id")
+        owner_id = (
+            str(authorizer.get("seller_id")).strip()
+            if authorizer.get("seller_id") is not None
+            else "0"
+        )
         team_id = headers.get("team_id")
 
-        if is_admin and owner_id is None:
-            owner_id = headers.get("seller_id")
+        # if is_admin and owner_id is None:
+        #     owner_id = headers.get("seller_id")
 
-        event["requestContext"]["authorizer"].update({
-            "seller_id": owner_id,
-            "team_id": team_id
-        })
+        event["requestContext"]["authorizer"].update(
+            {
+                "seller_id": headers.get("seller_id").strip()
+                if headers.get("seller_id") and is_admin
+                else owner_id,
+                "team_id": team_id,
+            }
+        )
 
         # owner_id = (
         #     str(authorizer.get("seller_id")).strip()
