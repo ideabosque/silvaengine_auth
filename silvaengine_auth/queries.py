@@ -187,6 +187,7 @@ def _resolve_certificate(info, **kwargs):
         if len(hooks):
             logger = info.context.get("logger")
 
+            # @TODO: exec by async
             for hook in hooks:
                 fragments = hook.split(":", 3)
 

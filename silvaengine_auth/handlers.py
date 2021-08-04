@@ -230,12 +230,6 @@ def _verify_permission(event, context):
         )
         function_config = event.get("fnConfigurations")
         authorizer = event.get("requestContext").get("authorizer")
-        uid = authorizer.get("sub")
-        owner_id = (
-            str(authorizer.get("seller_id")).strip()
-            if authorizer.get("seller_id") is not None
-            else "0"
-        )
         body = event.get("body")
         function_name = event.get("pathParameters").get("proxy").strip()
         content_type = headers.get("content-type")
@@ -243,6 +237,28 @@ def _verify_permission(event, context):
         endpoint_id = event.get("pathParameters").get("endpoint_id")
         message = f"Don't have the permission to access at /{area}/{endpoint_id}/{function_name}."
         # method = event["httpMethod"]
+        is_admin = (
+            bool(int(authorizer.get("is_admin")))
+            if authorizer.get("is_admin")
+            else False
+        )
+        uid = authorizer.get("sub")
+        owner_id = authorizer.get("seller_id")
+        team_id = headers.get("team_id")
+
+        if is_admin and owner_id is None:
+            owner_id = headers.get("seller_id")
+
+        event["requestContext"]["authorizer"].update({
+            "seller_id": owner_id,
+            "team_id": team_id
+        })
+
+        # owner_id = (
+        #     str(authorizer.get("seller_id")).strip()
+        #     if authorizer.get("seller_id") is not None
+        #     else "0"
+        # )
 
         if content_type and content_type.strip().lower() == "application/json":
             body_json = json.loads(body)
@@ -332,6 +348,7 @@ def _verify_permission(event, context):
                 ]
             }
 
+            # Append hooks result to context
             if authorizer.get("custom_context_hooks"):
                 additional_context.update(_execute_custom_hooks(authorizer))
 
@@ -433,6 +450,7 @@ def _execute_custom_hooks(authorizer):
             ]
             context = {}
 
+            # @TODO: exec by async
             for hook in hooks:
                 fragments = hook.split(":", 3)
 
