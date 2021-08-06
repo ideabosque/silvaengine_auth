@@ -179,7 +179,7 @@ def _resolve_certificate(info, **kwargs):
             if info.context.get("setting").get("custom_signin_hooks")
             else []
         )
-        # hooks = ["relation_engine:RelationEngine:get_relations_for_login"]
+        # hooks = ["relation_engine:RelationEngine:get_default_for_login"]
         token_claims = jwt.get_unverified_claims(
             response.get("AuthenticationResult").get("IdToken")
         )
@@ -218,6 +218,11 @@ def _resolve_certificate(info, **kwargs):
                 if type(result) is dict:
                     token_claims.update(result)
 
+        seller_id = token_claims.get("seller_id")
+
+        if token_claims.get("is_admin") and bool(int(token_claims.get("is_admin"))):
+            seller_id = 0
+
         return CertificateType(
             access_token=response.get("AuthenticationResult").get("AccessToken"),
             id_token=response.get("AuthenticationResult").get("IdToken"),
@@ -225,9 +230,7 @@ def _resolve_certificate(info, **kwargs):
             expires_in=response.get("AuthenticationResult").get("ExpiresIn"),
             token_type=response.get("AuthenticationResult").get("TokenType"),
             context=token_claims,
-            permissions=_get_user_permissions(
-                token_claims.get("seller_id"), token_claims.get("sub")
-            ),
+            permissions=_get_user_permissions(seller_id, token_claims.get("sub")),
         )
     except Exception as e:
         raise e
