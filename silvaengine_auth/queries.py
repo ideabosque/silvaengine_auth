@@ -179,7 +179,7 @@ def _resolve_certificate(info, **kwargs):
             if info.context.get("setting").get("custom_signin_hooks")
             else []
         )
-        hooks = ["relation_engine:RelationEngine:get_relations_for_login"]
+        # hooks = ["relation_engine:RelationEngine:get_relations_for_login"]
         token_claims = jwt.get_unverified_claims(
             response.get("AuthenticationResult").get("IdToken")
         )
