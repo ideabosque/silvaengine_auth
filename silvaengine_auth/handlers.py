@@ -6,6 +6,7 @@ from jose.constants import ALGORITHMS
 from hashlib import md5
 from importlib.util import find_spec
 from importlib import import_module
+from pynamodb.expressions.condition import Condition
 from silvaengine_utility import Utility
 from silvaengine_resource import ResourceModel
 from .utils import extract_fields_from_ast, HttpVerb, AuthPolicy, validate_required
@@ -23,7 +24,7 @@ def _create_role_handler(info, role_input):
             role_id,
             **{
                 "name": role_input.name,
-                "owner_id": owner_id if role_input.owner_id is not None else "",
+                "owner_id": owner_id,
                 "is_admin": role_input.is_admin,
                 "description": role_input.description,
                 "permissions": role_input.permissions,
@@ -92,6 +93,13 @@ def _create_relationship_handler(info, input):
                 "status": bool(input.status),
             },
         ).save()
+
+        # relationship_id = "a6bd834c-fa75-11eb-8633-0242ac120002"
+        # conditions = RelationshipModel.group_id.does_not_exist()
+        # relationships = RelationshipModel.scan(conditions)
+
+        # for r in relationships:
+        #     print(r.group_id, r.role_id)
 
         return RelationshipModel.get(relationship_id)
     except Exception as e:
@@ -269,7 +277,6 @@ def _verify_permission(event, context):
             .get("is_allowed_by_whitelist")
             == "1"
         ):
-            print("Check permission of resource:", True)
             return event
 
         if (
@@ -305,9 +312,6 @@ def _verify_permission(event, context):
             else ""
         )
         team_id = headers.get("team_id")
-
-        # if is_admin and owner_id is None:
-        #     owner_id = headers.get("seller_id")
 
         event["requestContext"]["authorizer"].update(
             {
@@ -392,12 +396,20 @@ def _verify_permission(event, context):
             return False
 
         # Check user's permissions
-        roles = [
-            role
-            for role in RoleModel.scan(
-                (RoleModel.owner_id == owner_id) & (RoleModel.user_ids.contains(uid))
-            )
+        role_ids = [
+            relationship.role_id
+            for relationship in RelationshipModel.scan(RelationshipModel.user_id == uid)
         ]
+
+        if len(role_ids) < 1:
+            raise Exception("The user is not assigned any roles", 400)
+
+        conditions = (
+            (RoleModel.owner_id.does_not_exist())
+            if owner_id == ""
+            else (RoleModel.owner_id == owner_id) & (RoleModel.role_id.is_in(role_ids))
+        )
+        roles = [role for role in RoleModel.scan(conditions)]
 
         if uid and check_permission(roles, permission):
             additional_context = {
@@ -543,6 +555,7 @@ def _execute_custom_hooks(authorizer):
         raise e
 
 
+# Get a list of resource permissions for a specified user
 def _get_user_permissions(authorizer):
     try:
         rules = []
@@ -552,17 +565,29 @@ def _get_user_permissions(authorizer):
             else False
         )
         cognito_user_sub = authorizer.get("sub")
-        owner_id = authorizer.get("seller_id")
-
-        if is_admin:
-            owner_id = 0
 
         if not cognito_user_sub:
             return rules
 
+        # Query user / group / role relationships
+        role_ids = [
+            relationship.role_id
+            for relationship in RelationshipModel.scan(
+                RelationshipModel.user_id == cognito_user_sub
+            )
+        ]
+
+        if len(role_ids) < 1:
+            return rules
+
+        owner_id = authorizer.get("seller_id")
+        filter_conditions = RoleModel.owner_id == owner_id
+
+        if is_admin or owner_id is None or owner_id == "":
+            filter_conditions = RoleModel.owner_id.does_not_exist()
+
         for role in RoleModel.scan(
-            (RoleModel.owner_id == owner_id)
-            & (RoleModel.user_ids.contains(cognito_user_sub))
+            RoleModel.role_id.is_in(*role_ids) & filter_conditions
         ):
             rules += role.permissions
 

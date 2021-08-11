@@ -241,11 +241,13 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
         variables = {
             # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
-            "name": "Manager",
-            "permissions": [{"resourceId": "Just for test", "permission": 15}],
-            "userIds": ["39f3cc57-e5b3-422e-a140-6c316d308b2b"],
-            "updatedBy": "23456",
-            "description": "Manager",
+            "name": "Test",
+            "permissions": [
+                {"resourceId": "053429072013b1fc6eeac9555cd4618b", "permission": 15}
+            ],
+            "userIds": [],
+            "updatedBy": "setup",
+            "description": "",
             "isAdmin": True,
         }
 
@@ -333,7 +335,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_certificate(self):
         query = """
             query certificate(
@@ -476,7 +478,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.authorize(request, None)
         print("Response:", response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_create_relationship(self):
         mutation = """
             mutation createRelationship(
@@ -509,8 +511,8 @@ class SilvaEngineAuthTest(unittest.TestCase):
         variables = {
             # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
             "groupId": "357",
-            "userId": "39f3cc57-e5b3-422e-a140-6c316d308b2b",
-            "roleId": "27fae565-efaf-11eb-a5cd-d79a21e9d8bf",
+            "userId": "49780567-2208-4922-8c12-b283e69543c6",
+            "roleId": "b22aefa3-f365-11eb-b465-ef992f87a3fa",
             "updatedBy": "setup",
             "status": True,
         }

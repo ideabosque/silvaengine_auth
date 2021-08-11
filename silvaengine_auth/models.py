@@ -54,7 +54,7 @@ class RoleModel(TraitModel):
     owner_id = UnicodeAttribute(null=True)
     name = UnicodeAttribute()
     permissions = ListAttribute(of=MapAttribute)
-    description = UnicodeAttribute()
+    description = UnicodeAttribute(null=True)
     is_admin = BooleanAttribute(default=False)
     user_ids = ListAttribute()
     status = BooleanAttribute(default=True)
