@@ -133,8 +133,6 @@ def _resolve_certificate(info, **kwargs):
             else os.getenv("app_client_secret")
         )
 
-        print("DEBUG 0000000000000000000000000000000000000000000000")
-
         if (
             not region_name
             or not aws_access_key_id
@@ -167,8 +165,6 @@ def _resolve_certificate(info, **kwargs):
 
         if not response.get("AuthenticationResult").get("IdToken"):
             raise Exception("Failed to sign in on cognito")
-
-        print("DEBUG ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt")
 
         # @TODO: hooks
         hooks = (
@@ -218,7 +214,7 @@ def _resolve_certificate(info, **kwargs):
 
                 if type(result) is dict:
                     token_claims.update(result)
-        print("Deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeebug")
+
         return CertificateType(
             access_token=response.get("AuthenticationResult").get("AccessToken"),
             id_token=response.get("AuthenticationResult").get("IdToken"),
