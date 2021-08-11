@@ -407,7 +407,8 @@ def _verify_permission(event, context):
         conditions = (
             (RoleModel.owner_id.does_not_exist())
             if owner_id == ""
-            else (RoleModel.owner_id == owner_id) & (RoleModel.role_id.is_in(role_ids))
+            else (RoleModel.owner_id == str(owner_id))
+            & (RoleModel.role_id.is_in(role_ids))
         )
         roles = [role for role in RoleModel.scan(conditions)]
 
@@ -583,7 +584,7 @@ def _get_user_permissions(authorizer):
             "Debug 1212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212"
         )
         owner_id = authorizer.get("seller_id")
-        filter_conditions = RoleModel.owner_id == owner_id
+        filter_conditions = RoleModel.owner_id == str(owner_id)
         print("Debug aaaaaaaaaaaaaa")
 
         if is_admin or owner_id is None or owner_id == "":
