@@ -122,13 +122,11 @@ def _resolve_certificate(info, **kwargs):
             if info.context.get("setting").get("aws_secret_access_key")
             else os.getenv("aws_secret_access_key")
         )
-
         app_client_id = (
             info.context.get("setting").get("app_client_id")
             if info.context.get("setting").get("app_client_id")
             else os.getenv("app_client_id")
         )
-
         app_client_secret = (
             info.context.get("setting").get("app_client_secret")
             if info.context.get("setting").get("app_client_secret")
@@ -187,7 +185,6 @@ def _resolve_certificate(info, **kwargs):
         if len(hooks):
             logger = info.context.get("logger")
 
-            # @TODO: exec by async
             for hook in hooks:
                 fragments = hook.split(":", 3)
 
@@ -218,11 +215,6 @@ def _resolve_certificate(info, **kwargs):
                 if type(result) is dict:
                     token_claims.update(result)
 
-        seller_id = token_claims.get("seller_id")
-
-        if token_claims.get("is_admin") and bool(int(token_claims.get("is_admin"))):
-            seller_id = 0
-
         return CertificateType(
             access_token=response.get("AuthenticationResult").get("AccessToken"),
             id_token=response.get("AuthenticationResult").get("IdToken"),
@@ -230,7 +222,7 @@ def _resolve_certificate(info, **kwargs):
             expires_in=response.get("AuthenticationResult").get("ExpiresIn"),
             token_type=response.get("AuthenticationResult").get("TokenType"),
             context=token_claims,
-            permissions=_get_user_permissions(seller_id, token_claims.get("sub")),
+            permissions=_get_user_permissions(token_claims),
         )
     except Exception as e:
         raise e

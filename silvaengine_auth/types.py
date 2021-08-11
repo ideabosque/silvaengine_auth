@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 from graphene.types.dynamic import Dynamic
+from sqlalchemy.orm import relationship
 
 __author__ = "bl"
 
@@ -58,6 +59,22 @@ class RolesType(ObjectType):
     last_evaluated_key = Field(LastEvaluatedKey)
 
 
+class RelationshipType(ObjectType):
+    relationship_id = String()
+    group_id = String()
+    user_id = String()
+    role_id = String()
+    created_at = DateTime()
+    updated_at = DateTime()
+    updated_by = String()
+    status = Boolean()
+
+
+class RelationshipsType(ObjectType):
+    items = List(RelationshipType)
+    last_evaluated_key = Field(LastEvaluatedKey)
+
+
 class RoleInputType(InputObjectType):
     role_id = String()
     owner_id = String()
@@ -78,3 +95,12 @@ class CertificateType(ObjectType):
     token_type = String()
     permissions = JSON()
     context = JSON()
+
+
+class RelationshipInputType(InputObjectType):
+    relationship_id = String()
+    group_id = String()
+    user_id = String()
+    role_id = String()
+    updated_by = String()
+    status = Boolean()

@@ -29,9 +29,27 @@ def deploy() -> list:
                 "role_graphql": {
                     "is_static": True,
                     "label": "Permissions",
-                    "create": [{"action": "createRole", "label": "Create Role"}],
-                    "update": [{"action": "updateRole", "label": "Modify Role"}],
-                    "delete": [{"action": "deleteRole", "label": "Delete Role"}],
+                    "create": [
+                        {"action": "createRole", "label": "Create Role"},
+                        {
+                            "action": "createRelationship",
+                            "label": "Create relationship",
+                        },
+                    ],
+                    "update": [
+                        {"action": "updateRole", "label": "Modify Role"},
+                        {
+                            "action": "updateRelationship",
+                            "label": "Update relationship",
+                        },
+                    ],
+                    "delete": [
+                        {"action": "deleteRole", "label": "Delete Role"},
+                        {
+                            "action": "deleteRelationship",
+                            "label": "Delete relationship",
+                        },
+                    ],
                     "query": [{"action": "roles", "label": "View Roles"}],
                     "type": "RequestResponse",
                     "support_methods": ["POST"],

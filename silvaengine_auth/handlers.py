@@ -9,28 +9,29 @@ from importlib import import_module
 from silvaengine_utility import Utility
 from silvaengine_resource import ResourceModel
 from .utils import extract_fields_from_ast, HttpVerb, AuthPolicy, validate_required
-from .models import ConnectionModel, RoleModel, ConfigDataModel
+from .models import ConnectionModel, RelationshipModel, RoleModel, ConfigDataModel
 
 
-def _create_role_handler(role_input):
+def _create_role_handler(info, role_input):
     try:
         role_id = str(uuid.uuid1())
+        owner_id = role_input.owner_id if role_input.owner_id is not None else ""
+        now = datetime.utcnow()
+        status = bool(role_input.status)
 
         RoleModel(
             role_id,
             **{
                 "name": role_input.name,
-                "owner_id": role_input.owner_id
-                if role_input.owner_id is not None
-                else "0",
+                "owner_id": owner_id if role_input.owner_id is not None else "",
                 "is_admin": role_input.is_admin,
                 "description": role_input.description,
                 "permissions": role_input.permissions,
                 "user_ids": role_input.user_ids,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": now,
+                "updated_at": now,
                 "updated_by": role_input.updated_by,
-                "status": True,
+                "status": status,
             },
         ).save()
 
@@ -39,7 +40,7 @@ def _create_role_handler(role_input):
         raise e
 
 
-def _update_role_handler(role_input):
+def _update_role_handler(info, role_input):
     try:
         validate_required(["role_id"], role_input)
 
@@ -63,12 +64,67 @@ def _update_role_handler(role_input):
         raise e
 
 
-def _delete_role_handler(role_input):
+def _delete_role_handler(info, role_input):
     try:
         validate_required(["role_id"], role_input)
 
         # Delete the role record.
         return RoleModel(role_input.role_id).delete()
+    except Exception as e:
+        raise e
+
+
+def _create_relationship_handler(info, input):
+    try:
+        validate_required(["group_id", "user_id", "role_id"], input)
+
+        relationship_id = str(uuid.uuid1())
+
+        RelationshipModel(
+            relationship_id,
+            **{
+                "user_id": input.user_id,
+                "role_id": input.role_id,
+                "group_id": input.group_id,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "updated_by": input.updated_by,
+                "status": bool(input.status),
+            },
+        ).save()
+
+        return RelationshipModel.get(relationship_id)
+    except Exception as e:
+        raise e
+
+
+def _update_relationship_handler(info, input):
+    try:
+        validate_required(["relationship_id"], input)
+
+        relationship = RelationshipModel.get(input.relationship_id)
+
+        relationship.update(
+            actions=[
+                RelationshipModel.user_id.set(input.user_id),
+                RelationshipModel.role_id.set(input.role_id),
+                RelationshipModel.group_id.set(input.group_id),
+                RelationshipModel.status.set(input.status),
+                RelationshipModel.updated_at.set(datetime.utcnow()),
+                RelationshipModel.updated_by.set(input.updated_by),
+            ]
+        )
+        return RelationshipModel.get(input.relationship_id)
+    except Exception as e:
+        raise e
+
+
+def _delete_relationship_handler(info, input):
+    try:
+        validate_required(["relationship_id"], input)
+
+        # Delete the group/user/role relationship.
+        return RelationshipModel(input.relationship_id).delete()
     except Exception as e:
         raise e
 
@@ -246,7 +302,7 @@ def _verify_permission(event, context):
         owner_id = (
             str(authorizer.get("seller_id")).strip()
             if authorizer.get("seller_id") is not None
-            else "0"
+            else ""
         )
         team_id = headers.get("team_id")
 
@@ -261,12 +317,6 @@ def _verify_permission(event, context):
                 "team_id": team_id,
             }
         )
-
-        # owner_id = (
-        #     str(authorizer.get("seller_id")).strip()
-        #     if authorizer.get("seller_id") is not None
-        #     else "0"
-        # )
 
         if content_type and content_type.strip().lower() == "application/json":
             body_json = json.loads(body)
@@ -493,10 +543,19 @@ def _execute_custom_hooks(authorizer):
         raise e
 
 
-def _get_user_permissions(owner_id, cognito_user_sub):
+def _get_user_permissions(authorizer):
     try:
         rules = []
-        owner_id = str(owner_id).strip() if owner_id is not None else "0"
+        is_admin = (
+            bool(int(authorizer.get("is_admin")))
+            if authorizer.get("is_admin")
+            else False
+        )
+        cognito_user_sub = authorizer.get("sub")
+        owner_id = authorizer.get("seller_id")
+
+        if is_admin:
+            owner_id = 0
 
         if not cognito_user_sub:
             return rules

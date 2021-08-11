@@ -51,11 +51,11 @@ class RoleModel(TraitModel):
         table_name = "se-roles"
 
     role_id = UnicodeAttribute(hash_key=True)
-    owner_id = UnicodeAttribute(default="0")
+    owner_id = UnicodeAttribute(null=True)
     name = UnicodeAttribute()
     permissions = ListAttribute(of=MapAttribute)
     description = UnicodeAttribute()
-    is_admin = BooleanAttribute()
+    is_admin = BooleanAttribute(default=False)
     user_ids = ListAttribute()
     status = BooleanAttribute(default=True)
 
@@ -64,14 +64,11 @@ class RelationshipModel(TraitModel):
     class Meta(TraitModel.Meta):
         table_name = "se-relationships"
 
-    group_id = UnicodeAttribute(hash_key=True)
-    user_id = UnicodeAttribute(range_key=True)
+    relationship_id = UnicodeAttribute(hash_key=True)
+    user_id = UnicodeAttribute()
     role_id = UnicodeAttribute()
-    # permissions = ListAttribute(of=MapAttribute)
-    # description = UnicodeAttribute()
-    # is_admin = BooleanAttribute()
-    # user_ids = ListAttribute()
-    # status = BooleanAttribute(default=True)
+    group_id = UnicodeAttribute(null=True)
+    status = BooleanAttribute(default=True)
 
 
 class ConfigDataModel(BaseModel):

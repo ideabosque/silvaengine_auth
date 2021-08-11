@@ -5,13 +5,26 @@ from __future__ import print_function
 __author__ = "bl"
 
 from graphene import ObjectType, String, Int, Schema, Field
-from .types import RoleType, RolesType, PageInputType, CertificateType
+from .types import (
+    RoleType,
+    RolesType,
+    PageInputType,
+    CertificateType,
+    RelationshipsType,
+)
 from .queries import _resolve_roles, _resolve_role, _resolve_certificate
-from .mutations import CreateRole, UpdateRole, DeleteRole
+from .mutations import (
+    CreateRole,
+    UpdateRole,
+    DeleteRole,
+    CreateRelationship,
+    UpdateRelationship,
+    DeleteRelationship,
+)
 
 
 def role_type_class():
-    return [RolesType, RoleType]
+    return [RolesType, RoleType, RelationshipsType]
 
 
 def certificate_type_class():
@@ -50,11 +63,14 @@ class RoleQuery(ObjectType):
         return _resolve_role(info, **kwargs)
 
 
-# Modify role list or role
+# Modify role / relation list or role / relation
 class RoleMutations(ObjectType):
     create_role = CreateRole.Field()
     update_role = UpdateRole.Field()
     delete_role = DeleteRole.Field()
+    create_relationship = CreateRelationship.Field()
+    update_relationship = UpdateRelationship.Field()
+    delete_relationship = DeleteRelationship.Field()
 
 
 # Generate API documents.

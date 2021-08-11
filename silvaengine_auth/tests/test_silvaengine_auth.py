@@ -333,7 +333,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_certificate(self):
         query = """
             query certificate(
@@ -475,6 +475,50 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
         response = self.auth.authorize(request, None)
         print("Response:", response)
+
+    # @unittest.skip("demonstrating skipping")
+    def test_create_relationship(self):
+        mutation = """
+            mutation createRelationship(
+                    $groupId: String!,
+                    $userId: String!,
+                    $roleId: String!,
+                    $updatedBy: String!
+                    $status: Boolean
+                ) {
+                createRelationship(
+                    input:{
+                        groupId: $groupId,
+                        userId: $userId,
+                        roleId: $roleId,
+                        updatedBy: $updatedBy
+                        status: $status
+                    }
+                ) {
+                    relationship{
+                        groupId
+                        userId
+                        roleId
+                        updatedBy
+                        status
+                    }
+                }
+            }
+        """
+
+        variables = {
+            # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
+            "groupId": "357",
+            "userId": "39f3cc57-e5b3-422e-a140-6c316d308b2b",
+            "roleId": "27fae565-efaf-11eb-a5cd-d79a21e9d8bf",
+            "updatedBy": "setup",
+            "status": True,
+        }
+
+        payload = {"mutation": mutation, "variables": variables}
+
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
 
 
 if __name__ == "__main__":
