@@ -579,7 +579,9 @@ def _get_user_permissions(authorizer):
 
         if len(role_ids) < 1:
             return rules
-
+        print(
+            "Debug 1212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212"
+        )
         owner_id = authorizer.get("seller_id")
         filter_conditions = RoleModel.owner_id == owner_id
 
@@ -599,7 +601,9 @@ def _get_user_permissions(authorizer):
 
         if len(resource_ids) < 1:
             return None
-
+        print(
+            "Debug 2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+        )
         for resource in ResourceModel.scan(
             ResourceModel.resource_id.is_in(*resource_ids)
         ):
@@ -657,6 +661,10 @@ def _get_user_permissions(authorizer):
                                 continue
 
                             result[function_name].append(getattr(item, "action"))
+
+        print(
+            "Debug 33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333"
+        )
 
         return result
     except Exception as e:
