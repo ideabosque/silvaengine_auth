@@ -404,13 +404,23 @@ def _verify_permission(event, context):
         if len(role_ids) < 1:
             raise Exception("The user is not assigned any roles", 400)
 
-        conditions = (
-            (RoleModel.owner_id.does_not_exist())
-            if owner_id == ""
-            else (RoleModel.owner_id == str(owner_id))
-            & (RoleModel.role_id.is_in(role_ids))
-        )
-        roles = [role for role in RoleModel.scan(conditions)]
+        filter_conditions = RoleModel.owner_id == str(owner_id)
+
+        if is_admin or owner_id is None or owner_id == "":
+            filter_conditions = RoleModel.owner_id.does_not_exist()
+
+        # conditions = (
+        #     (RoleModel.owner_id.does_not_exist())
+        #     if owner_id == ""
+        #     else (RoleModel.owner_id == str(owner_id))
+        #     & (RoleModel.role_id.is_in(role_ids))
+        # )
+        roles = [
+            role
+            for role in RoleModel.scan(
+                RoleModel.role_id.is_in(role_ids) & filter_conditions
+            )
+        ]
 
         if uid and check_permission(roles, permission):
             additional_context = {
