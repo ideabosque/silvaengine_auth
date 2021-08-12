@@ -438,6 +438,9 @@ def _verify_permission(event, context):
 
 def _authorize_response(event, context):
     try:
+        headers = dict(
+            (key.strip().lower(), value) for key, value in event.get("headers").items()
+        )
         principal = event.get("path")
         api_id = event.get("requestContext").get("apiId")
         method_arn_fragments = event.get("methodArn").split(":")
@@ -503,6 +506,29 @@ def _authorize_response(event, context):
 
         if additional_context is None:
             additional_context = {}
+        else:
+            if additional_context.get("is_admin") is None:
+                raise Exception("Invalid access token", 400)
+
+            if bool(int(additional_context.get("is_admin").strip())) == False:
+                if (
+                    additional_context.get("seller_id") is None
+                    or headers.get("seller_id") is None
+                    or additional_context.get("teams") is None
+                    or headers.get("team_id") is None
+                ):
+                    raise Exception("Missing required parameter", 400)
+                elif additional_context.get("seller_id") != headers.get("seller_id"):
+                    raise Exception("Invalid request", 403)
+                else:
+                    teams = dict(**Utility.json_loads(additional_context.get("teams")))
+                    team_id = headers.get("team_id").strip()
+
+                    if teams.get(team_id) is None:
+                        raise Exception("Invalid request", 403)
+
+                    additional_context.pop("teams")
+                    additional_context.update(teams.get(team_id))
 
         # Append the custom context hooks setting to context
         if settings.get("custom_context_hooks"):

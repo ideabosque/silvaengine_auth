@@ -504,7 +504,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.authorize(request, None)
         print("Response:", response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_verify_permissions(self):
         request = {
             "resource": "/{area}/{endpoint_id}/{proxy+}",
