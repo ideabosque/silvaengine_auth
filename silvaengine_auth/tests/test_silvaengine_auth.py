@@ -335,7 +335,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_certificate(self):
         query = """
             query certificate(
@@ -363,115 +363,145 @@ class SilvaEngineAuthTest(unittest.TestCase):
         print(response)
         print("##############")
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_authorize(self):
         request = {
-            "type": "REQUEST",
-            "methodArn": "arn:aws:execute-api:us-west-2:305624596524:zi6fc6jh81/beta/POST/core/1/analytics_engine_graphql",
             "resource": "/{area}/{endpoint_id}/{proxy+}",
-            "path": "/core/1/analytics_engine_graphql",
-            "httpMethod": "ANY",
+            "path": "/core/api/subscription_management_graphql",
+            "httpMethod": "POST",
             "headers": {
-                "Accept": "application/json",
+                "Accept": "application/json, text/plain, */*",
                 "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "zh-CN",
-                "Authorization": "eyJraWQiOiJPVzBkQXpiNlgwZ1FPNVNhamRycG1rWmFPNGJBR2hJRU9GaEJMRUZWTE9nPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIwNzZkZTIyYS02ZWVkLTQ4MzYtYjRiYi1lYzA2ZjEyNzQzMTEiLCJhdWQiOiIxNTZvN3RvY243bTZhYTZhaDl0cGZmOWdscyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJldmVudF9pZCI6Ijg0NTZmMDYzLWYzMDktNDRhMy05NTkwLTlkOWM1MDEyY2ZiMiIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNjI1MDUxMTYyLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl9lT3NFOE5ZbGUiLCJjb2duaXRvOnVzZXJuYW1lIjoiYmFycnkueS5saXVAaG90bWFpbC5jb20iLCJleHAiOjE2MjUxMDg3NjIsImlhdCI6MTYyNTA1MTE2MiwiZW1haWwiOiJiYXJyeS55LmxpdUBob3RtYWlsLmNvbSJ9.YhL0ozDNazBI0cLRuvC77PSmsLgWfl9g55Rybu5NKLRU9GVWm8hcC9caCLYxa4xSIYv7XFBBMPb9IWwKr_gR9RBDwBDvJZk1TPpX12mi6hzm0BW8ClLPNqpWkIhOH_VrVVX7tYtk3SOQXa7vC6LiRC_M6dEOYLM_3kizrg-8Ilso9Bj5PbVh1U1OqWZ81rUTZNQ74_tlbGrOCChmG2_xJ-8syCsNFBU2BMU9uDW3NzpavCOKJgWF6D8UzgZNEvzEYij-qZswQ7ruh0sdxrZMxPbbWV_rLalZgB_lswyMlSXBx0sak7Nk314XNIoOxWJzgh8lsz-0gLYh_WqAyNk6ag",
+                "Accept-Language": "zh-CN,zh;q=0.9,cy;q=0.8,en;q=0.7,zh-TW;q=0.6",
+                "Authorization": "eyJraWQiOiJyUmhLMlhzWm5hNkZjR09za1UxUFNOK3FvUHY5YnRUS2tDRTBxOGJSRDhBPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI0OTc4MDU2Ny0yMjA4LTQ5MjItOGMxMi1iMjgzZTY5NTQzYzYiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwic192ZW5kb3JfaWQiOiJTMTA3NjMiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9HTXZVaGF4UnMiLCJjb2duaXRvOnVzZXJuYW1lIjoiZWR3YXJkQG1hZ2lueC5jb20iLCJpc19hZG1pbiI6IjAiLCJhdWQiOiJldDNpMXRwYmJtYjQxZW9ncmRscDVxY3NqIiwiZXZlbnRfaWQiOiJjZGM5YWU4MC1lNmMxLTQyOGMtYmQ2MC1mNzM3YTY4ODMzZDciLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTYyODU4NDk5NCwiZXhwIjoxNjI4NjU2OTk0LCJpYXQiOjE2Mjg1ODQ5OTQsInNlbGxlcl9pZCI6IjIwMTgiLCJlbWFpbCI6ImVkd2FyZEBtYWdpbnguY29tIn0.SVn6Uw4HMrfOgsySaA8uYaLY4bl0cDbDsuEmxCZyn28lca3ATr3Bexkk0YHXLlqQv215rZuTILxNk0Rg_5Z27ZxbpfBTOQBHgioV2vNtvgEbwF74cfHfPl0SDG58-CE6N2M4P1XUk3d8Gl2pBAMNGRATlF_cHdIbYZzCUo8somFd9hWXCw2lrS5Og7KvAOiWguqjU-BRMXgsqSx0a6InCOnrhex5W3kecPeFsfDEtKeTxoCPx0K_5DuTV7SmleMrgOMhC6o-rWM3xveS0szMLOLFNlGaE94lThxzzZat9ZeTxBzprynl4eylhrWmw7Hv54BgCY9bJfMsGlZUptahpQ",
                 "CloudFront-Forwarded-Proto": "https",
                 "CloudFront-Is-Desktop-Viewer": "true",
                 "CloudFront-Is-Mobile-Viewer": "false",
                 "CloudFront-Is-SmartTV-Viewer": "false",
                 "CloudFront-Is-Tablet-Viewer": "false",
-                "CloudFront-Viewer-Country": "US",
-                "Content-Length": "306",
+                "CloudFront-Viewer-Country": "TW",
                 "content-type": "application/json",
-                "Host": "zi6fc6jh81.execute-api.us-west-2.amazonaws.com",
-                "origin": "electron://altair",
+                "Host": "3fizlvttp4.execute-api.us-east-1.amazonaws.com",
+                "origin": "http://localhost:3000",
+                "Referer": "http://localhost:3000/",
+                "sec-ch-ua": '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"',
+                "sec-ch-ua-mobile": "?0",
                 "sec-fetch-dest": "empty",
                 "sec-fetch-mode": "cors",
                 "sec-fetch-site": "cross-site",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AltairGraphQLClient/4.0.7 Chrome/89.0.4389.82 Electron/12.0.1 Safari/537.36",
-                "Via": "2.0 246b44c4747953e35657a81aebd7c7fb.cloudfront.net (CloudFront)",
-                "X-Amz-Cf-Id": "ei6w42prkeVdB68nNQKY-Ij3pYavjcebDgrHoula3fdTkIH23T3Yng==",
-                "X-Amzn-Trace-Id": "Root=1-60f78496-23771fd411e1c965332d8238",
-                "x-api-key": "T5u3V0P1iv3rF44rRDEbb8M4Mo3g974n408C7MUD",
-                "X-Forwarded-For": "103.97.201.121, 130.176.93.71",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+                "Via": "2.0 23bee510a951c47c4c1082b3e720b091.cloudfront.net (CloudFront)",
+                "X-Amz-Cf-Id": "UQvnpcs8yo4CP__tSBG3-CGuG___WWCt49xuQ_QC9QBh91odXC9Hlw==",
+                "X-Amzn-Trace-Id": "Root=1-6114d543-61ca25da51153e4326ceea3b",
+                "x-api-key": "dxt9direVp4QEfg3ZpzI7SetPXYHNGGadgJ5dGu4",
+                "X-Forwarded-For": "61.221.4.123, 52.46.62.100",
                 "X-Forwarded-Port": "443",
                 "X-Forwarded-Proto": "https",
             },
             "multiValueHeaders": {
-                "Accept": ["application/json"],
+                "Accept": ["application/json, text/plain, */*"],
                 "Accept-Encoding": ["gzip, deflate, br"],
-                "Accept-Language": ["zh-CN"],
+                "Accept-Language": ["zh-CN,zh;q=0.9,cy;q=0.8,en;q=0.7,zh-TW;q=0.6"],
                 "Authorization": [
-                    "eyJraWQiOiJPVzBkQXpiNlgwZ1FPNVNhamRycG1rWmFPNGJBR2hJRU9GaEJMRUZWTE9nPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIwNzZkZTIyYS02ZWVkLTQ4MzYtYjRiYi1lYzA2ZjEyNzQzMTEiLCJhdWQiOiIxNTZvN3RvY243bTZhYTZhaDl0cGZmOWdscyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJldmVudF9pZCI6Ijg0NTZmMDYzLWYzMDktNDRhMy05NTkwLTlkOWM1MDEyY2ZiMiIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNjI1MDUxMTYyLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl9lT3NFOE5ZbGUiLCJjb2duaXRvOnVzZXJuYW1lIjoiYmFycnkueS5saXVAaG90bWFpbC5jb20iLCJleHAiOjE2MjUxMDg3NjIsImlhdCI6MTYyNTA1MTE2MiwiZW1haWwiOiJiYXJyeS55LmxpdUBob3RtYWlsLmNvbSJ9.YhL0ozDNazBI0cLRuvC77PSmsLgWfl9g55Rybu5NKLRU9GVWm8hcC9caCLYxa4xSIYv7XFBBMPb9IWwKr_gR9RBDwBDvJZk1TPpX12mi6hzm0BW8ClLPNqpWkIhOH_VrVVX7tYtk3SOQXa7vC6LiRC_M6dEOYLM_3kizrg-8Ilso9Bj5PbVh1U1OqWZ81rUTZNQ74_tlbGrOCChmG2_xJ-8syCsNFBU2BMU9uDW3NzpavCOKJgWF6D8UzgZNEvzEYij-qZswQ7ruh0sdxrZMxPbbWV_rLalZgB_lswyMlSXBx0sak7Nk314XNIoOxWJzgh8lsz-0gLYh_WqAyNk6ag"
+                    "eyJraWQiOiJyUmhLMlhzWm5hNkZjR09za1UxUFNOK3FvUHY5YnRUS2tDRTBxOGJSRDhBPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI0OTc4MDU2Ny0yMjA4LTQ5MjItOGMxMi1iMjgzZTY5NTQzYzYiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwic192ZW5kb3JfaWQiOiJTMTA3NjMiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9HTXZVaGF4UnMiLCJjb2duaXRvOnVzZXJuYW1lIjoiZWR3YXJkQG1hZ2lueC5jb20iLCJpc19hZG1pbiI6IjAiLCJhdWQiOiJldDNpMXRwYmJtYjQxZW9ncmRscDVxY3NqIiwiZXZlbnRfaWQiOiJjZGM5YWU4MC1lNmMxLTQyOGMtYmQ2MC1mNzM3YTY4ODMzZDciLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTYyODU4NDk5NCwiZXhwIjoxNjI4NjU2OTk0LCJpYXQiOjE2Mjg1ODQ5OTQsInNlbGxlcl9pZCI6IjIwMTgiLCJlbWFpbCI6ImVkd2FyZEBtYWdpbnguY29tIn0.SVn6Uw4HMrfOgsySaA8uYaLY4bl0cDbDsuEmxCZyn28lca3ATr3Bexkk0YHXLlqQv215rZuTILxNk0Rg_5Z27ZxbpfBTOQBHgioV2vNtvgEbwF74cfHfPl0SDG58-CE6N2M4P1XUk3d8Gl2pBAMNGRATlF_cHdIbYZzCUo8somFd9hWXCw2lrS5Og7KvAOiWguqjU-BRMXgsqSx0a6InCOnrhex5W3kecPeFsfDEtKeTxoCPx0K_5DuTV7SmleMrgOMhC6o-rWM3xveS0szMLOLFNlGaE94lThxzzZat9ZeTxBzprynl4eylhrWmw7Hv54BgCY9bJfMsGlZUptahpQ"
                 ],
                 "CloudFront-Forwarded-Proto": ["https"],
                 "CloudFront-Is-Desktop-Viewer": ["true"],
                 "CloudFront-Is-Mobile-Viewer": ["false"],
                 "CloudFront-Is-SmartTV-Viewer": ["false"],
                 "CloudFront-Is-Tablet-Viewer": ["false"],
-                "CloudFront-Viewer-Country": ["US"],
-                "Content-Length": ["306"],
+                "CloudFront-Viewer-Country": ["TW"],
                 "content-type": ["application/json"],
-                "Host": ["zi6fc6jh81.execute-api.us-west-2.amazonaws.com"],
-                "origin": ["electron://altair"],
+                "Host": ["3fizlvttp4.execute-api.us-east-1.amazonaws.com"],
+                "origin": ["http://localhost:3000"],
+                "Referer": ["http://localhost:3000/"],
+                "sec-ch-ua": [
+                    '"Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"'
+                ],
+                "sec-ch-ua-mobile": ["?0"],
                 "sec-fetch-dest": ["empty"],
                 "sec-fetch-mode": ["cors"],
                 "sec-fetch-site": ["cross-site"],
                 "User-Agent": [
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AltairGraphQLClient/4.0.7 Chrome/89.0.4389.82 Electron/12.0.1 Safari/537.36"
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
                 ],
                 "Via": [
-                    "2.0 246b44c4747953e35657a81aebd7c7fb.cloudfront.net (CloudFront)"
+                    "2.0 23bee510a951c47c4c1082b3e720b091.cloudfront.net (CloudFront)"
                 ],
                 "X-Amz-Cf-Id": [
-                    "ei6w42prkeVdB68nNQKY-Ij3pYavjcebDgrHoula3fdTkIH23T3Yng=="
+                    "UQvnpcs8yo4CP__tSBG3-CGuG___WWCt49xuQ_QC9QBh91odXC9Hlw=="
                 ],
-                "X-Amzn-Trace-Id": ["Root=1-60f78496-23771fd411e1c965332d8238"],
-                "x-api-key": ["T5u3V0P1iv3rF44rRDEbb8M4Mo3g974n408C7MUD"],
-                "X-Forwarded-For": ["103.97.201.121, 130.176.93.71"],
+                "X-Amzn-Trace-Id": ["Root=1-6114d543-61ca25da51153e4326ceea3b"],
+                "x-api-key": ["dxt9direVp4QEfg3ZpzI7SetPXYHNGGadgJ5dGu4"],
+                "X-Forwarded-For": ["61.221.4.123, 52.46.62.100"],
                 "X-Forwarded-Port": ["443"],
                 "X-Forwarded-Proto": ["https"],
             },
-            "queryStringParameters": {},
-            "multiValueQueryStringParameters": {},
+            "queryStringParameters": None,
+            "multiValueQueryStringParameters": None,
             "pathParameters": {
                 "area": "core",
-                "proxy": "analytics_engine_graphql",
-                "endpoint_id": "1",
+                "proxy": "subscription_management_graphql",
+                "endpoint_id": "api",
             },
-            "stageVariables": {},
+            "stageVariables": None,
             "requestContext": {
-                "resourceId": "aljh9q",
+                "resourceId": "d5y1px",
+                "authorizer": {
+                    "principalId": "/core/api/subscription_management_graphql",
+                    "integrationLatency": 6983,
+                },
                 "resourcePath": "/{area}/{endpoint_id}/{proxy+}",
                 "httpMethod": "POST",
-                "extendedRequestId": "CzGnnE87PHcF0uA=",
-                "requestTime": "21/Jul/2021:02:21:10 +0000",
-                "path": "/beta/core/1/analytics_engine_graphql",
-                "accountId": "305624596524",
+                "extendedRequestId": "D8ZCkFMBIAMFwRA=",
+                "requestTime": "12/Aug/2021:08:01:07 +0000",
+                "path": "/beta/core/api/subscription_management_graphql",
+                "accountId": "785238679596",
                 "protocol": "HTTP/1.1",
                 "stage": "beta",
-                "domainPrefix": "zi6fc6jh81",
-                "requestTimeEpoch": 1626834070911,
-                "requestId": "1e957abf-6d2e-40a6-8cd0-fd66f37822b2",
+                "domainPrefix": "3fizlvttp4",
+                "requestTimeEpoch": 1628755267489,
+                "requestId": "3d5bcb92-d05c-4cff-ac41-4f17e55848dd",
                 "identity": {
                     "cognitoIdentityPoolId": None,
                     "cognitoIdentityId": None,
-                    "apiKey": "T5u3V0P1iv3rF44rRDEbb8M4Mo3g974n408C7MUD",
+                    "apiKey": "dxt9direVp4QEfg3ZpzI7SetPXYHNGGadgJ5dGu4",
                     "principalOrgId": None,
                     "cognitoAuthenticationType": None,
                     "userArn": None,
-                    "apiKeyId": "p3gex19qti",
-                    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) AltairGraphQLClient/4.0.7 Chrome/89.0.4389.82 Electron/12.0.1 Safari/537.36",
+                    "apiKeyId": "faqkldfbx7",
+                    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
                     "accountId": None,
                     "caller": None,
-                    "sourceIp": "103.97.201.121",
+                    "sourceIp": "61.221.4.123",
                     "accessKey": None,
                     "cognitoAuthenticationProvider": None,
                     "user": None,
                 },
-                "domainName": "zi6fc6jh81.execute-api.us-west-2.amazonaws.com",
-                "apiId": "zi6fc6jh81",
+                "domainName": "3fizlvttp4.execute-api.us-east-1.amazonaws.com",
+                "apiId": "3fizlvttp4",
+            },
+            "body": '{"query":"query($email: String!) {\\n                    mage2Token(email: $email) {\\n                        token\\n                    }\\n                }","variables":{"email":"edward@maginx.com"}}',
+            "isBase64Encoded": False,
+            "fnConfigurations": {
+                "area": "core",
+                "aws_lambda_arn": "arn:aws:lambda:us-east-1:785238679596:function:silvaengine_microcore",
+                "config": {
+                    "auth_required": False,
+                    "class_name": "SubscriptionManagementEngine",
+                    "funct_type": "RequestResponse",
+                    "graphql": True,
+                    "methods": ["POST"],
+                    "module_name": "subscription_management_engine",
+                    "operations": {
+                        "create": ["insertServiceSubscription"],
+                        "delete": ["deleteServiceSubscription"],
+                        "query": ["serviceSubscriptions", "mage2Token"],
+                        "update": ["updateServiceSubscription"],
+                    },
+                    "setting": "subscription_management_engine",
+                },
+                "function": "subscription_management_graphql",
             },
         }
 
