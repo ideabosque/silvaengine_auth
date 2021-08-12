@@ -409,16 +409,10 @@ def _verify_permission(event, context):
         if is_admin or owner_id is None or owner_id == "":
             filter_conditions = RoleModel.owner_id.does_not_exist()
 
-        # conditions = (
-        #     (RoleModel.owner_id.does_not_exist())
-        #     if owner_id == ""
-        #     else (RoleModel.owner_id == str(owner_id))
-        #     & (RoleModel.role_id.is_in(role_ids))
-        # )
         roles = [
             role
             for role in RoleModel.scan(
-                RoleModel.role_id.is_in(role_ids) & filter_conditions
+                RoleModel.role_id.is_in(*role_ids) & filter_conditions
             )
         ]
 
