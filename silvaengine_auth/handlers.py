@@ -404,7 +404,7 @@ def _verify_permission(event, context):
         if len(role_ids) < 1:
             raise Exception("The user is not assigned any roles", 400)
 
-        filter_conditions = RoleModel.owner_id == str(owner_id)
+        filter_conditions = RoleModel.owner_id == owner_id
 
         if is_admin or owner_id is None or owner_id == "":
             filter_conditions = RoleModel.owner_id.does_not_exist()
