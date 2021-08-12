@@ -182,7 +182,8 @@ def _resolve_certificate(info, **kwargs):
             response.get("AuthenticationResult").get("IdToken")
         )
 
-        token_claims.pop("teams")
+        if token_claims.get("teams"):
+            token_claims.pop("teams")
 
         if len(hooks):
             logger = info.context.get("logger")
