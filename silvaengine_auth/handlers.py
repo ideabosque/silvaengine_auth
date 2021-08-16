@@ -318,7 +318,7 @@ def _verify_permission(event, context):
                 "seller_id": headers.get("seller_id").strip()
                 if headers.get("seller_id") and is_admin
                 else owner_id,
-                "team_id": team_id,
+                "team_id": team_id.strip() if team_id else None,
             }
         )
 
@@ -396,9 +396,16 @@ def _verify_permission(event, context):
             return False
 
         # Check user's permissions
+        relationship_filter_conditions = RelationshipModel.user_id == uid
+
+        if is_admin == False:
+            relationship_filter_conditions = (RelationshipModel.user_id == uid) & (
+                RelationshipModel.group_id == team_id
+            )
+
         role_ids = [
             relationship.role_id
-            for relationship in RelationshipModel.scan(RelationshipModel.user_id == uid)
+            for relationship in RelationshipModel.scan(relationship_filter_conditions)
         ]
 
         if len(role_ids) < 1:
@@ -490,7 +497,7 @@ def _authorize_response(event, context):
         if _verify_whitelist(event, context):
             custom_context = {"is_allowed_by_whitelist": 1}
 
-            return response(policy=policy, context=custom_context)
+            return response(policy=policy, is_allow=True, context=custom_context)
 
         ### 2. Verify user token
         # @TODO: Should fix the setting id name style.
@@ -500,7 +507,7 @@ def _authorize_response(event, context):
         )
 
         if len(settings.keys()) < 1:
-            raise Exception("Missing required configuration", 500)
+            raise Exception("Missing required configuration(s)", 500)
 
         additional_context = _verify_token(settings, event)
 
@@ -508,7 +515,7 @@ def _authorize_response(event, context):
             additional_context = {}
         else:
             if additional_context.get("is_admin") is None:
-                raise Exception("Invalid access token", 400)
+                raise Exception("Missing required item of token", 400)
 
             if bool(int(additional_context.get("is_admin").strip())) == False:
                 if (
@@ -517,15 +524,15 @@ def _authorize_response(event, context):
                     or additional_context.get("teams") is None
                     or headers.get("team_id") is None
                 ):
-                    raise Exception("Missing required parameter", 400)
+                    raise Exception("Missing required parameter(s)", 400)
                 elif additional_context.get("seller_id") != headers.get("seller_id"):
-                    raise Exception("Invalid request", 403)
+                    raise Exception("Access exceeded", 403)
                 else:
                     teams = dict(**Utility.json_loads(additional_context.get("teams")))
                     team_id = headers.get("team_id").strip()
 
                     if teams.get(team_id) is None:
-                        raise Exception("Invalid request", 403)
+                        raise Exception("Access exceeded", 403)
 
                     additional_context.pop("teams")
                     additional_context.update(teams.get(team_id))
