@@ -467,26 +467,8 @@ def _authorize_response(event, context):
             # policy.allowAllMethods()
             getattr(policy, "allowAllMethods" if is_allow else "denyAllMethods")()
 
-            # if is_allow:
-            # policy.allowMethod(request_method, uri)
-
-            # else:
-            #     policy.denyMethod(request_method, uri)
-            # """policy.allowMethod(HttpVerb.GET, "/pets/*")"""
-
             # Finally, build the policy
             authResponse = policy.build()
-
-            # new! -- add additional key-value pairs associated with the authenticated principal
-            # these are made available by APIGW like so: $context.authorizer.<key>
-            # additional context is cached
-            # context = {
-            #     "user_id": "test_123456",  # $context.authorizer.key -> value
-            #     "number": 1,
-            #     "bool": True,
-            # }
-            # # context['arr'] = ['foo'] <- this is invalid, APIGW will not accept it
-            # # context['obj'] = {'foo':'bar'} <- also invalid
 
             if context:
                 authResponse["context"] = context
@@ -545,7 +527,11 @@ def _authorize_response(event, context):
 
         return response(policy=policy, context=additional_context)
     except Exception as e:
-        raise e
+        # raise e
+        print(e)
+        return response(
+            policy=policy, is_allow=False, context={"error_message": e.args[0]}
+        )
 
 
 # Execute custom hooks by setting
