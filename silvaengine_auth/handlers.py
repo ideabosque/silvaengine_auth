@@ -7,9 +7,9 @@ from hashlib import md5
 from importlib.util import find_spec
 from importlib import import_module
 from pynamodb.expressions.condition import Condition
-from silvaengine_utility import Utility
+from silvaengine_utility import Utility, Graphql, Authorizer
 from silvaengine_resource import ResourceModel
-from .utils import extract_fields_from_ast, HttpVerb, AuthPolicy, validate_required
+from .utils import validate_required
 from .models import ConnectionModel, RelationshipModel, RoleModel, ConfigDataModel
 
 
@@ -337,7 +337,7 @@ def _verify_permission(event, context):
 
         operations = function_config.get("config").get("operations")
         permission = 0
-        fields = extract_fields_from_ast(body, deepth=1)
+        fields = Graphql.extract_fields_from_ast(body, deepth=1)
 
         if "mutation" in fields:
             # create - 1, query - 2, update = 4, delete = 8
@@ -458,28 +458,30 @@ def _authorize_response(event, context):
         area = api_gateway_arn_fragments[3]
         endpoint_id = api_gateway_arn_fragments[4]
         # request_method = str(event.get("requestContext").get("httpMethod")).upper()
-        policy = AuthPolicy(principal, aws_account_id)
-        policy.restApiId = api_id
-        policy.region = region
-        policy.stage = stage
+        authorizer = Authorizer(principal, aws_account_id, api_id, region, stage)
+        # policy = AuthPolicy(principal, aws_account_id)
+        # policy.restApiId = api_id
+        # policy.region = region
+        # policy.stage = stage
 
-        def response(policy, is_allow=True, context=None):
-            # policy.allowAllMethods()
-            getattr(policy, "allowAllMethods" if is_allow else "denyAllMethods")()
+        # def response(policy, is_allow=True, context=None):
+        #     # policy.allowAllMethods()
+        #     getattr(policy, "allowAllMethods" if is_allow else "denyAllMethods")()
 
-            # Finally, build the policy
-            authResponse = policy.build()
+        #     # Finally, build the policy
+        #     authResponse = policy.build()
 
-            if context:
-                authResponse["context"] = context
+        #     if context:
+        #         authResponse["context"] = context
 
-            return authResponse
+        #     return authResponse
 
         ### 1. Verify source ip
         if _verify_whitelist(event, context):
             custom_context = {"is_allowed_by_whitelist": 1}
 
-            return response(policy=policy, is_allow=True, context=custom_context)
+            # return response(policy=policy, is_allow=True, context=custom_context)
+            return authorizer.authorize(is_allow=True, context=custom_context)
 
         ### 2. Verify user token
         # @TODO: Should fix the setting id name style.
@@ -525,13 +527,17 @@ def _authorize_response(event, context):
                 {"custom_context_hooks": settings.get("custom_context_hooks")}
             )
 
-        return response(policy=policy, context=additional_context)
+        # return response(policy=policy, context=additional_context)
+        return authorizer.authorize(is_allow=True, context=additional_context)
     except Exception as e:
         # raise e
         print(e)
-        return response(
-            policy=policy, is_allow=False, context={"error_message": e.args[0]}
-        )
+        # return response(
+        #     policy=policy, is_allow=False, context={"error_message": e.args[0]}
+        # )
+        ctx = {"error_message": e.args[0]}
+
+        return authorizer.authorize(is_allow=False, context=ctx)
 
 
 # Execute custom hooks by setting
