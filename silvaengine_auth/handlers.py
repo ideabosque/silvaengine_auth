@@ -459,28 +459,11 @@ def _authorize_response(event, context):
         endpoint_id = api_gateway_arn_fragments[4]
         # request_method = str(event.get("requestContext").get("httpMethod")).upper()
         authorizer = Authorizer(principal, aws_account_id, api_id, region, stage)
-        # policy = AuthPolicy(principal, aws_account_id)
-        # policy.restApiId = api_id
-        # policy.region = region
-        # policy.stage = stage
-
-        # def response(policy, is_allow=True, context=None):
-        #     # policy.allowAllMethods()
-        #     getattr(policy, "allowAllMethods" if is_allow else "denyAllMethods")()
-
-        #     # Finally, build the policy
-        #     authResponse = policy.build()
-
-        #     if context:
-        #         authResponse["context"] = context
-
-        #     return authResponse
 
         ### 1. Verify source ip
         if _verify_whitelist(event, context):
             custom_context = {"is_allowed_by_whitelist": 1}
 
-            # return response(policy=policy, is_allow=True, context=custom_context)
             return authorizer.authorize(is_allow=True, context=custom_context)
 
         ### 2. Verify user token
@@ -527,17 +510,9 @@ def _authorize_response(event, context):
                 {"custom_context_hooks": settings.get("custom_context_hooks")}
             )
 
-        # return response(policy=policy, context=additional_context)
         return authorizer.authorize(is_allow=True, context=additional_context)
     except Exception as e:
-        # raise e
-        print(e)
-        # return response(
-        #     policy=policy, is_allow=False, context={"error_message": e.args[0]}
-        # )
-        ctx = {"error_message": e.args[0]}
-
-        return authorizer.authorize(is_allow=False, context=ctx)
+        raise e
 
 
 # Execute custom hooks by setting
