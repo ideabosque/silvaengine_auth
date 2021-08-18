@@ -209,26 +209,27 @@ class SilvaEngineAuthTest(unittest.TestCase):
             mutation createRole(
                     $name: String!,
                     $permissions: [PermissionInputType]!,
-                    $userIds: [String]!,
                     $updatedBy: String!
                     $isAdmin: Boolean!
                     $description: String!
+                    $ownerId: String
+                    $status: Boolean
                 ) {
                 createRole(
                     roleInput:{
                         name: $name,
                         permissions: $permissions,
-                        userIds: $userIds,
                         updatedBy: $updatedBy
                         isAdmin: $isAdmin,
                         description: $description
+                        ownerId: $ownerId
+                        status: $status
                     }
                 ) {
                     role{
                         roleId
                         name
                         permissions{resourceId, permission}
-                        userIds
                         createdAt
                         updatedAt
                         updatedBy
@@ -241,14 +242,26 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
         variables = {
             # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
-            "name": "Test",
+            "name": "Administrator",
             "permissions": [
-                {"resourceId": "053429072013b1fc6eeac9555cd4618b", "permission": 15}
+                {"resourceId": "053429072013b1fc6eeac9555cd4618b", "permission": 15},
+                {"resourceId": "16477cc4459ef3fda28ae622e993782f", "permission": 15},
+                {"resourceId": "30162dce4320708c97af61906551c157", "permission": 15},
+                {"resourceId": "3d3f12d147fb9252f2cc296def8210c0", "permission": 15},
+                {"resourceId": "50edc9c01a6a79f496b95b36e3f460be", "permission": 15},
+                {"resourceId": "530e5b45de1ea4a8cd32e74c115a7014", "permission": 15},
+                {"resourceId": "5466e004123f67a995931490509e54a0", "permission": 15},
+                {"resourceId": "832be4700056ff454e4129f954c8c1f7", "permission": 15},
+                {"resourceId": "962dfa1df6b4fd684503ecce6320f6ba", "permission": 15},
+                {"resourceId": "cbb25a1d81164e7d22703a90f4dd4523", "permission": 15},
+                {"resourceId": "db1d5fcb2d0b692f2a423e2f2ae23247", "permission": 15},
+                {"resourceId": "fa6ac17f060bf019b5e25b43157102fe", "permission": 15},
+                {"resourceId": "fc4ec1d9a95d73ff981e8f95a3e3a3b1", "permission": 15},
             ],
-            "userIds": [],
             "updatedBy": "setup",
             "description": "",
             "isAdmin": True,
+            "ownerId": 2019,
         }
 
         payload = {"mutation": mutation, "variables": variables}
@@ -260,42 +273,36 @@ class SilvaEngineAuthTest(unittest.TestCase):
     def test_update_role(self):
         mutation = """
             mutation updateRole(
-                    $roleId: String,
-                    $name: String!,
-                    $permissions: [PermissionInputType]!,
-                    $userIds: [String]!,
-                    $updatedBy: String!
+                    $roleId: String!,
+                    $permissions: [PermissionInputType]
                 ) {
                 updateRole(
                     roleInput:{
                         roleId: $roleId,
-                        name: $name,
-                        permissions: $permissions,
-                        userIds: $userIds,
-                        updatedBy: $updatedBy
+                        permissions: $permissions
                     }
                 ) {
                     role{
                         roleId
                         name
                         permissions{resourceId, permission}
-                        userIds
                         createdAt
                         updatedAt
                         updatedBy
+                        isAdmin
+                        description
+                        status
+                        ownerId
                     }
                 }
             }
         """
 
         variables = {
-            # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
-            "name": "test",
+            "roleId": "0f9cc991-fb57-11eb-805c-fba8500c5957",
             "permissions": [
-                {"resourceId": "7f359f30-af16-11eb-8bb3-0242ac180002", "permission": 1}
+                {"resourceId": "053429072013b1fc6eeac9555cd4618b", "permission": 15},
             ],
-            "userIds": ["39f3cc57-e5b3-422e-a140-6c316d308b2b"],
-            "updatedBy": "99999",
         }
 
         payload = {"mutation": mutation, "variables": variables}
@@ -703,6 +710,41 @@ class SilvaEngineAuthTest(unittest.TestCase):
             "roleId": "b22aefa3-f365-11eb-b465-ef992f87a3fa",
             "updatedBy": "setup",
             "status": True,
+        }
+
+        payload = {"mutation": mutation, "variables": variables}
+
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    # @unittest.skip("demonstrating skipping")
+    def test_update_relationship(self):
+        mutation = """
+            mutation updateRelationship(
+                    $relationshipId: String!,
+                    $groupId: String
+                ) {
+                updateRelationship(
+                    input:{
+                        groupId: $groupId,
+                        relationshipId: $relationshipId
+                    }
+                ) {
+                    relationship{
+                        groupId
+                        userId
+                        roleId
+                        updatedBy
+                        status
+                        updatedAt
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "relationshipId": "0b4cf942-fb84-11eb-a0f7-6df87694cc69",
+            "groupId": "357",
         }
 
         payload = {"mutation": mutation, "variables": variables}

@@ -28,7 +28,6 @@ def _create_role_handler(info, role_input):
                 "is_admin": role_input.is_admin,
                 "description": role_input.description,
                 "permissions": role_input.permissions,
-                "user_ids": role_input.user_ids,
                 "created_at": now,
                 "updated_at": now,
                 "updated_by": role_input.updated_by,
@@ -45,21 +44,35 @@ def _update_role_handler(info, role_input):
     try:
         validate_required(["role_id"], role_input)
 
-        role = RoleModel.get(role_input.role_id, None)
+        role = RoleModel(role_input.role_id)
+        actions = [
+            RoleModel.updated_at.set(datetime.utcnow()),
+        ]
+        fields = [
+            "name",
+            "updated_by",
+            "owner_id",
+            "is_admin",
+            "description",
+            "permissions",
+            "status",
+        ]
+        need_update = False
 
-        role.update(
-            actions=[
-                RoleModel.updated_at.set(datetime.utcnow()),
-                RoleModel.updated_by.set(role_input.updated_by),
-                RoleModel.name.set(role_input.name),
-                RoleModel.owner_id.set(role_input.owner_id),
-                RoleModel.is_admin.set(role_input.is_admin),
-                RoleModel.description.set(role_input.description),
-                RoleModel.permissions.set(role_input.permissions),
-                RoleModel.user_ids.set(role_input.user_ids),
-                RoleModel.status.set(role_input.status),
-            ]
-        )
+        for field in fields:
+            if hasattr(role_input, field) and getattr(role_input, field):
+                need_update = True
+
+                actions.append(
+                    getattr(RoleModel, field).set(getattr(role_input, field))
+                )
+
+        if need_update:
+            role.update(
+                actions=actions,
+                condition=RoleModel.role_id == role_input.role_id,
+            )
+
         return RoleModel.get(role_input.role_id, None)
     except Exception as e:
         raise e
@@ -110,18 +123,34 @@ def _update_relationship_handler(info, input):
     try:
         validate_required(["relationship_id"], input)
 
-        relationship = RelationshipModel.get(input.relationship_id)
+        relationship = RelationshipModel(input.relationship_id)
+        actions = [
+            RelationshipModel.updated_at.set(datetime.utcnow()),
+        ]
+        fields = [
+            "user_id",
+            "role_id",
+            "group_id",
+            "is_admin",
+            "updated_by",
+            "status",
+        ]
+        need_update = False
 
-        relationship.update(
-            actions=[
-                RelationshipModel.user_id.set(input.user_id),
-                RelationshipModel.role_id.set(input.role_id),
-                RelationshipModel.group_id.set(input.group_id),
-                RelationshipModel.status.set(input.status),
-                RelationshipModel.updated_at.set(datetime.utcnow()),
-                RelationshipModel.updated_by.set(input.updated_by),
-            ]
-        )
+        for field in fields:
+            if hasattr(input, field) and getattr(input, field):
+                need_update = True
+
+                actions.append(
+                    getattr(RelationshipModel, field).set(getattr(input, field))
+                )
+
+        if need_update:
+            relationship.update(
+                actions=actions,
+                condition=RelationshipModel.relationship_id == input.relationship_id,
+            )
+
         return RelationshipModel.get(input.relationship_id)
     except Exception as e:
         raise e
@@ -459,12 +488,19 @@ def _authorize_response(event, context):
         endpoint_id = api_gateway_arn_fragments[4]
         # request_method = str(event.get("requestContext").get("httpMethod")).upper()
         authorizer = Authorizer(principal, aws_account_id, api_id, region, stage)
+        ctx = {}
+
+        if headers.get("seller_id"):
+            ctx["seller_id"] = str(headers.get("seller_id")).strip()
+
+        if headers.get("team_id"):
+            ctx["team_id"] = str(headers.get("team_id")).strip()
 
         ### 1. Verify source ip
         if _verify_whitelist(event, context):
-            custom_context = {"is_allowed_by_whitelist": 1}
+            ctx.update({"is_allowed_by_whitelist": 1})
 
-            return authorizer.authorize(is_allow=True, context=custom_context)
+            return authorizer.authorize(is_allow=True, context=ctx)
 
         ### 2. Verify user token
         # @TODO: Should fix the setting id name style.
@@ -479,7 +515,7 @@ def _authorize_response(event, context):
         additional_context = _verify_token(settings, event)
 
         if additional_context is None:
-            additional_context = {}
+            additional_context = ctx
         else:
             if additional_context.get("is_admin") is None:
                 raise Exception("Missing required item of token", 400)
