@@ -37,7 +37,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     def tearDown(self):
         logger.info("Destory SilvaEngineAuthTest ...")
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_graphql_get_resource_or_roles(self):
         # query = """
         #     query getResources(
@@ -59,16 +59,18 @@ class SilvaEngineAuthTest(unittest.TestCase):
         #     }
         # # """
 
-        variables = {"limit": 1}
+        variables = {"limit": 10, "ownerId": "2018"}
 
         query = """
             query roles(
                     $limit: Int!
                     $lastEvaluatedKey: PageInputType
+                    $ownerId: String
                 ){
                 roles(
                     limit: $limit
                     lastEvaluatedKey: $lastEvaluatedKey
+                    ownerId: $ownerId
                 ){
                     items {
                         roleId
@@ -78,6 +80,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                         createdAt
                         updatedAt
                         updatedBy
+                        ownerId
                     }
                     lastEvaluatedKey {
                         hashKey
@@ -717,7 +720,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_update_relationship(self):
         mutation = """
             mutation updateRelationship(

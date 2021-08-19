@@ -48,6 +48,7 @@ class RoleQuery(ObjectType):
     roles = Field(
         RolesType,
         limit=Int(),
+        owner_id=String(),
         last_evaluated_key=PageInputType(),
     )
 

@@ -35,6 +35,10 @@ def _resolve_roles(info, **kwargs):
         if RoleModel._range_key_attribute()
         else None
     )
+    filter_conditions = None
+
+    if kwargs.get("owner_id"):
+        filter_conditions = RoleModel.owner_id == str(kwargs.get("owner_id")).strip()
 
     if last_evaluated_key:
         values = {}
@@ -52,11 +56,12 @@ def _resolve_roles(info, **kwargs):
                 values[range_key_field_name] = {range_key_field_data_type: v}
 
         results = RoleModel.scan(
+            filter_condition=filter_conditions,
             limit=int(limit),
             last_evaluated_key=values,
         )
     else:
-        results = RoleModel.scan(limit=int(limit))
+        results = RoleModel.scan(filter_condition=filter_conditions, limit=int(limit))
 
     roles = [role for role in results]
 
