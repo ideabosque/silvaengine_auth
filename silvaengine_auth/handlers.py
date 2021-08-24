@@ -1,5 +1,7 @@
+from re import T
 import uuid, json, time, urllib.request, os
 from datetime import datetime
+from graphene.types import field
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 from jose.constants import ALGORITHMS
@@ -9,14 +11,15 @@ from importlib import import_module
 from pynamodb.expressions.condition import Condition
 from silvaengine_utility import Utility, Graphql, Authorizer
 from silvaengine_resource import ResourceModel
-from .utils import validate_required
+from .utils import validate_required, get_seller_id, is_admin_user
 from .models import ConnectionModel, RelationshipModel, RoleModel, ConfigDataModel
 
 
 def _create_role_handler(info, role_input):
     try:
         role_id = str(uuid.uuid1())
-        owner_id = role_input.owner_id if role_input.owner_id is not None else ""
+        # owner_id = role_input.owner_id if role_input.owner_id is not None else ""
+        owner_id = get_seller_id(info.context)
         now = datetime.utcnow()
         status = bool(role_input.status)
 
@@ -25,7 +28,7 @@ def _create_role_handler(info, role_input):
             **{
                 "name": role_input.name,
                 "owner_id": owner_id,
-                "is_admin": role_input.is_admin,
+                "is_admin": is_admin_user(info.context),
                 "description": role_input.description,
                 "permissions": role_input.permissions,
                 "created_at": now,
@@ -51,12 +54,22 @@ def _update_role_handler(info, role_input):
         fields = [
             "name",
             "updated_by",
-            "owner_id",
+            # "owner_id",
             "is_admin",
             "description",
             "permissions",
             "status",
         ]
+        owner_id = get_seller_id(info)
+        condition = (RoleModel.role_id == role_input.role_id) & (
+            RoleModel.owner_id == owner_id
+        )
+
+        if owner_id is None:
+            condition = (RoleModel.role_id == role_input.role_id) & (
+                RoleModel.owner_id.does_not_exist()
+            )
+
         need_update = False
 
         for field in fields:
@@ -70,7 +83,7 @@ def _update_role_handler(info, role_input):
         if need_update:
             role.update(
                 actions=actions,
-                condition=RoleModel.role_id == role_input.role_id,
+                condition=condition,
             )
 
         return RoleModel.get(role_input.role_id, None)
@@ -81,9 +94,18 @@ def _update_role_handler(info, role_input):
 def _delete_role_handler(info, role_input):
     try:
         validate_required(["role_id"], role_input)
+        owner_id = get_seller_id(info)
+        condition = (RoleModel.role_id == role_input.role_id) & (
+            RoleModel.owner_id == owner_id
+        )
+
+        if owner_id is None:
+            condition = (RoleModel.role_id == role_input.role_id) & (
+                RoleModel.owner_id.does_not_exist()
+            )
 
         # Delete the role record.
-        return RoleModel(role_input.role_id).delete()
+        return RoleModel(role_input.role_id).delete(condition=condition)
     except Exception as e:
         raise e
 
@@ -357,72 +379,21 @@ def _verify_permission(event, context):
             if "query" in body_json:
                 body = body_json["query"]
 
-        # Parse the graphql request's body to AST and extract fields from the AST
-        # extract_fields_from_ast(schema, operation, deepth)
-        # operation = [mutation | query]
-        # create - 1, read - 2, update - 4, delete - 8 crud
         if not function_config.get("config").get("operations"):
             raise Exception(message, 403)
 
-        operations = function_config.get("config").get("operations")
-        permission = 0
-        fields = Graphql.extract_fields_from_ast(body, deepth=1)
+        function_operations = function_config.get("config").get("operations")
 
-        if "mutation" in fields:
-            # create - 1, query - 2, update = 4, delete = 8
-            for operation in operations:
-                functions = operations[operation]
-
-                if type(functions) is not list or len(functions) < 1:
-                    continue
-
-                for fn in functions:
-                    if fn.strip().lower() in fields.get("mutation"):
-                        if operation.lower() == "create":
-                            permission += 1
-                        elif operation.lower() == "update":
-                            permission += 4
-                        elif operation.lower() == "delete":
-                            permission += 8
-        elif "query" in fields:  # @TODO: Check query fields permission
-            if (
-                type(operations.get("query")) is list
-                and len(operations.get("query")) > 0
-            ):
-                for fn in operations.get("query"):
-                    if fn.strip().lower() in fields.get("query"):
-                        permission += 2
-            else:
-                permission += 2
-
-        if (
-            not permission
-            or not function_config.get("config").get("module_name")
-            or not function_config.get("config").get("class_name")
-        ):
+        if not function_config.get("config").get(
+            "module_name"
+        ) or not function_config.get("config").get("class_name"):
             raise Exception(message, 403)
 
-        # 1. Fetch resource by request path
-        # TODO: Use index query to instead of the scan
-        factor = "{}-{}-{}".format(
-            function_config.get("config").get("module_name").strip(),
-            function_config.get("config").get("class_name").strip(),
-            function_name,
-        ).lower()
-        resource_id = md5(factor.encode(encoding="UTF-8")).hexdigest()
-
-        # Check the path of request is be contained  by the permissions of role
-        # If the path has exist, compare their permission
-        def check_permission(roles, permission) -> bool:
-            for role in roles:
-                if role and len(role.permissions) > 0:
-                    for rule in role.permissions:
-                        if (
-                            rule.get("resource_id") == resource_id
-                            and int(rule.get("permission")) & permission
-                        ):
-                            return True
-            return False
+        # Parse the graphql request's body to AST and extract fields from the AST
+        flatten_ast = Graphql.extract_flatten_ast(body)
+        # print(flatten_ast, Utility.json_dumps(flatten_ast))
+        if type(flatten_ast) is not list and len(flatten_ast) < 1:
+            raise Exception(message, 403)
 
         # Check user's permissions
         relationship_filter_conditions = RelationshipModel.user_id == uid
@@ -452,7 +423,42 @@ def _verify_permission(event, context):
             )
         ]
 
-        if uid and check_permission(roles, permission):
+        if len(roles) < 1:
+            raise Exception("The user is not assigned any roles", 400)
+
+        for item in flatten_ast:
+            operation_name = item.get("operation_name")
+            operation = item.get("operation")
+
+            # Check the operation type is be included by function settings
+            if (
+                not function_operations.get(operation)
+                or type(function_operations.get(operation)) is not list
+            ):
+                raise Exception(message, 403)
+
+            function_operations = list(
+                set(
+                    [
+                        operation_name.strip().lower()
+                        for operation_name in function_operations.get(operation)
+                    ]
+                )
+            )
+
+            print(
+                operation_name.strip().lower(),
+                function_operations,
+                operation_name.strip().lower() not in function_operations,
+            )
+
+            if (
+                operation_name.strip().lower() not in function_operations
+            ) or not check_permission(roles, item):
+                raise Exception(message, 403)
+
+        # Attatch additional info to context
+        if uid:
             additional_context = {
                 "roles": [
                     {"role_id": role.role_id, "name": role.name} for role in roles
@@ -632,11 +638,8 @@ def _get_user_permissions(authorizer):
         ):
             rules += role.permissions
 
-        permissions = {}
         resources = {}
-        resource_ids = list(
-            set([str(rule.get("resource_id")).strip() for rule in rules])
-        )
+        resource_ids = list(set([str(rule.resource_id).strip() for rule in rules]))
 
         if len(resource_ids) < 1:
             return None
@@ -649,7 +652,7 @@ def _get_user_permissions(authorizer):
         result = {}
 
         for rule in rules:
-            resource_id = rule.get("resource_id")
+            resource_id = rule.resource_id.strip()
             resource = resources.get(resource_id)
 
             if (
@@ -661,46 +664,156 @@ def _get_user_permissions(authorizer):
 
             function_name = getattr(resource, "function")
             operations = getattr(resource, "operations")
-
-            if not permissions.get(resource_id):
-                permissions[resource_id] = 0
+            print(operations)
 
             if not result.get(function_name):
                 result[function_name] = []
+                # result[function_name] = {}
 
-            if rule.get("permission"):
-                for permission in [1, 2, 4, 8]:
-                    if (permission & int(rule.get("permission"))) and not (
-                        permission & permissions[resource_id]
+            if type(rule.permissions):
+                for permission in rule.permissions:
+                    if (
+                        permission.operation
+                        and permission.operation_name
+                        and permission.operation != ""
+                        and permission.operation_name != ""
                     ):
-                        permissions[resource_id] += permission
-                        action = None
+                        # action = permission.operation.strip().lower()
 
-                        if permission == 1:
-                            action = "create"
-                        elif permission == 2:
-                            action = "query"
-                        elif permission == 4:
-                            action = "update"
-                        elif permission == 8:
-                            action = "delete"
+                        # if not result.get(function_name).get(action):
+                        #     result[function_name][action] = []
 
-                        if not action or not hasattr(operations, action):
-                            continue
+                        result[function_name].append(
+                            permission.operation_name.strip().lower()
+                        )
 
-                        items = getattr(operations, action)
+                        # result[function_name][action].append(
+                        #     permission.operation_name.strip().lower()
+                        # )
 
-                        if type(items) is not list or len(items) < 1:
-                            continue
-
-                        for item in items:
-                            if not getattr(item, "action"):
-                                continue
-
-                            result[function_name].append(getattr(item, "action"))
+                        # result[function_name][action] = list(
+                        #     set(result[function_name][action])
+                        # )
+            result[function_name] = list(set(result[function_name]))
         return result
     except Exception as e:
         raise e
+
+
+def check_permission(roles, resource) -> bool:
+    if (
+        not resource.get("operation")
+        or not resource.get("operation_name")
+        or not resource.get("fields")
+    ):
+        return False
+
+    permissions = []
+
+    for role in roles:
+        if (
+            not role.permissions
+            or not role.role_id
+            or type(role.permissions) is not list
+            or len(role.permissions) < 1
+        ):
+            continue
+
+        permissions += role.permissions
+
+    rules = []
+
+    for permission in permissions:
+        if (
+            not permission.permissions
+            or not permission.resource_id
+            or type(permission.permissions) is not list
+            or len(permission.permissions) < 1
+        ):
+            continue
+
+        rules += permission.permissions
+
+    m = {}
+    request_operation = resource.get("operation").strip().lower()
+    request_operation_name = resource.get("operation_name").strip().lower()
+    request_fields = resource.get("fields")
+
+    for rule in rules:
+        if (
+            not rule.operation
+            or not rule.operation_name
+            or request_operation != rule.operation.strip().lower()
+        ):
+            continue
+
+        operation_name = rule.operation_name.strip().lower()
+
+        if not m.get(operation_name):
+            m[operation_name] = []
+
+        if type(rule.exclude) is list and len(rule.exclude):
+            m[operation_name] = list(set(m[operation_name] + rule.exclude))
+
+    if type(m.get(request_operation_name)) is list:
+        for field in m.get(request_operation_name):
+            path, field = field.strip().lower().split(":", 2)
+
+            if (
+                path
+                and field
+                and path != ""
+                and field != ""
+                and request_fields.get(path)
+                and field.strip().lower() in request_fields.get(path)
+            ):
+                return False
+
+        return True
+
+    return False
+
+
+def convert_permisson_as_dict(permissions):
+    if type(permissions) is not list or len(permissions) < 1:
+        return None
+
+    # permissions = [
+    #     {
+    #         "permissions": [
+    #             {"exclude": [], "operation_name": "paginateProducts"},
+    #             {"exclude": [], "operation_name": "showProduct"},
+    #         ],
+    #         "resource_id": "053429072013b1fc6eeac9555cd4618b",
+    #     }
+    # ]
+    permission_map = {}
+
+    for rule in permissions:
+        if (
+            not rule.get("permissions")
+            or not rule.get("resource_id")
+            or type(rule.get("permissions")) is not list
+            or len(rule.get("permissions")) < 1
+        ):
+            continue
+
+        resource_id = str(rule.get("resource_id")).strip()
+        permission_map[resource_id] = {}
+
+        for permission in rule.get("permissions"):
+            if not permission.get("operation_name"):
+                continue
+
+            operation_name = str(permission.get("operation_name")).strip()
+            permission_map[resource_id][operation_name] = (
+                permission.get("exclude")
+                if type(permission.get("exclude")) is list
+                and len(permission.get("exclude"))
+                else []
+            )
+
+    return permission_map
 
 
 def add_resource():

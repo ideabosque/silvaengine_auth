@@ -17,3 +17,35 @@ def validate_required(fields, input):
                 raise Exception(f"Parameter `{field}` is required", 400)
     except Exception as e:
         raise e
+
+
+def is_admin_user(context):
+    try:
+        return bool(
+            int(
+                context.get("context")
+                .get("authorizer")
+                .get("is_admin")
+            )
+        )
+    except Exception as e:
+        raise e
+
+
+def get_seller_id(context):
+    try:
+        seller_id = (
+            context.get("context")
+            .get("authorizer")
+            .get("seller_id")
+        )
+        is_admin = is_admin_user(context)
+
+        if not is_admin and seller_id is None:
+            raise Exception("Missing seller id", 400)
+        elif is_admin:
+            return None
+
+        return str(seller_id).strip()
+    except Exception as e:
+        raise e

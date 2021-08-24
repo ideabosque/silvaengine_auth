@@ -30,14 +30,30 @@ class PageInputType(InputObjectType):
     range_key = String()
 
 
+class ConstraintType(ObjectType):
+    operation = String(required=True)
+    operation_name = String(required=True)
+    # [] = allowed all, ["field" ...] - Exclude specifed field(s)
+    exclude = List(String)
+    # field = String()
+
+
+class ConstraintInputType(InputObjectType):
+    operation = String(required=True)
+    operation_name = String(required=True)
+    # [] = allowed all, ["field" ...] - Exclude specifed field(s)
+    exclude = List(String)
+    # field = String()
+
+
 class PermissionType(ObjectType):
     resource_id = String()
-    permission = Int()
+    permissions = List(ConstraintType)
 
 
 class PermissionInputType(InputObjectType):
     resource_id = String()
-    permission = Int()
+    permissions = List(ConstraintInputType)
 
 
 class RoleType(ObjectType):

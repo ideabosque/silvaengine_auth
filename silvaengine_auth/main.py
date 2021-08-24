@@ -53,7 +53,7 @@ def deploy() -> list:
                     "query": [{"action": "roles", "label": "View Roles"}],
                     "type": "RequestResponse",
                     "support_methods": ["POST"],
-                    "is_auth_required": False,
+                    "is_auth_required": True,
                     "is_graphql": True,
                 },
                 "login_graphql": {
@@ -86,8 +86,12 @@ class Auth(object):
                 mutation=RoleMutations,
                 types=role_type_class(),
             )
-
-            ctx = {"logger": self.logger, "setting": self.setting}
+            default = {"authorizer": {"is_admin": "0", "seller_id": 2018}}
+            ctx = {
+                "logger": self.logger,
+                "setting": self.setting,
+                "context": params.get("context", default),
+            }
             variables = params.get("variables", {})
             query = params.get("query")
 

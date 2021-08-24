@@ -46,6 +46,29 @@ class TraitModel(BaseModel):
     updated_by = UnicodeAttribute()
 
 
+# Plan B:
+# permissions = [
+#     {
+#         "label": "FUNCTION NAME",
+#         "permissions": [
+#              "field": TYPE,
+#              "exclude": []
+#         ]
+#     }
+# ]
+class ResourceConstraintMap(MapAttribute):
+    operation = UnicodeAttribute()
+    operation_name = UnicodeAttribute()
+    # [] = allowed all, ["field" ...] - Exclude specifed field(s)
+    exclude = ListAttribute()
+    # field = String()
+
+
+class RoleConstraintMap(MapAttribute):
+    resource_id = UnicodeAttribute()
+    permissions = ListAttribute(of=ResourceConstraintMap)
+
+
 class RoleModel(TraitModel):
     class Meta(TraitModel.Meta):
         table_name = "se-roles"
@@ -53,7 +76,7 @@ class RoleModel(TraitModel):
     role_id = UnicodeAttribute(hash_key=True)
     owner_id = UnicodeAttribute(null=True)
     name = UnicodeAttribute()
-    permissions = ListAttribute(of=MapAttribute)
+    permissions = ListAttribute(of=RoleConstraintMap)
     description = UnicodeAttribute(null=True)
     is_admin = BooleanAttribute(default=False)
     status = BooleanAttribute(default=True)
