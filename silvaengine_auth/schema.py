@@ -5,10 +5,10 @@ from __future__ import print_function
 __author__ = "bl"
 
 from graphene import ObjectType, String, Int, Schema, Field
+from silvaengine_utility import JSON
 from .types import (
     RoleType,
     RolesType,
-    PageInputType,
     CertificateType,
     RelationshipsType,
 )
@@ -49,7 +49,7 @@ class RoleQuery(ObjectType):
         RolesType,
         limit=Int(),
         owner_id=String(),
-        last_evaluated_key=PageInputType(),
+        last_evaluated_key=JSON(),
     )
 
     role = Field(

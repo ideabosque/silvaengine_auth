@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from graphene.types.dynamic import Dynamic
 from sqlalchemy.orm import relationship
+from silvaengine_utility import JSON
 
 __author__ = "bl"
 
@@ -18,16 +19,6 @@ from graphene import (
     Boolean,
 )
 from silvaengine_utility import JSON
-
-
-class LastEvaluatedKey(ObjectType):
-    hash_key = String()
-    range_key = String()
-
-
-class PageInputType(InputObjectType):
-    hash_key = String()
-    range_key = String()
 
 
 class ConstraintType(ObjectType):
@@ -72,7 +63,7 @@ class RoleType(ObjectType):
 
 class RolesType(ObjectType):
     items = List(RoleType)
-    last_evaluated_key = Field(LastEvaluatedKey)
+    last_evaluated_key = JSON()
 
 
 class RelationshipType(ObjectType):
@@ -88,7 +79,7 @@ class RelationshipType(ObjectType):
 
 class RelationshipsType(ObjectType):
     items = List(RelationshipType)
-    last_evaluated_key = Field(LastEvaluatedKey)
+    last_evaluated_key = JSON()
 
 
 class RoleInputType(InputObjectType):

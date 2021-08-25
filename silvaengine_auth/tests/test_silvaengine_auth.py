@@ -38,33 +38,18 @@ class SilvaEngineAuthTest(unittest.TestCase):
         logger.info("Destory SilvaEngineAuthTest ...")
 
     @unittest.skip("demonstrating skipping")
-    def test_graphql_get_resource_or_roles(self):
-        # query = """
-        #     query getResources(
-        #             $limit: Int!
-        #         ){
-        #         resources(
-        #             limit: $limit
-        #         ){
-        #             resourceId
-        #             service
-        #             name
-        #             path
-        #             status
-        #             createdAt
-        #             updatedAt
-        #             updatedBy
-        #             lastEvaluatedKey
-        #         }
-        #     }
-        # # """
-
-        variables = {"limit": 10, "ownerId": "2018"}
+    def test_get_roles_graphql(self):
+        variables = {
+            "limit": 2,
+            "lastEvaluatedKey": {
+                "role_id": {"S": "19906bba-054b-11ec-9f58-b51b75803bb1"}
+            },
+        }
 
         query = """
             query roles(
-                    $limit: Int!
-                    $lastEvaluatedKey: PageInputType
+                    $limit: Int
+                    $lastEvaluatedKey: JSON
                     $ownerId: String
                 ){
                 roles(
@@ -75,79 +60,53 @@ class SilvaEngineAuthTest(unittest.TestCase):
                     items {
                         roleId
                         name
-                        permissions{resourceId, permission}
+                        permissions{
+                            resourceId
+                            permissions {
+                                operation
+                                operationName
+                                exclude
+                            }
+                        }
                         userIds
                         createdAt
                         updatedAt
                         updatedBy
                         ownerId
                     }
-                    lastEvaluatedKey {
-                        hashKey
-                        rangeKey
-                    }
+                    lastEvaluatedKey
                 }
             }
         """
-
-        # variables = {"resourceId": "666c6f90-a013-11eb-8016-0242ac120002"}
-
-        # query = """
-        #     query getResources(
-        #             $limit: Int!,
-        #             $lastEvaluatedKey: String
-        #         ){
-        #         resources(
-        #             limit: $limit,
-        #             lastEvaluatedKey: $lastEvaluatedKey
-        #         ){
-        #             resourceId
-        #             service
-        #             name
-        #             path
-        #             status
-        #             createdAt
-        #             updatedAt
-        #             updatedBy
-        #             lastEvaluatedKey
-        #         }
-        #     }
-        # """
-
-        # variables = {
-        #     "limit": 1,
-        #     "lastEvaluatedKey": Utility.json_dumps(
-        #         {
-        #             # "service": {"S": "xyz"},
-        #             "resource_id": {"S": "e0dff598-ae3d-11eb-94ae-0242ac120002"},
-        #         }
-        #     ),
-        # }
 
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
-    def test_graphql_get_role(self):
+    # @unittest.skip("demonstrating skipping")
+    def test_get_role_graphql(self):
         query = """
-            query role(
-                    $roleId: String
-                ){
-                role(
-                    roleId: $roleId
-                ){
+            query role( $roleId: String!){
+                role (roleId: $roleId){
                     roleId
                     name
-                    permissions{resourceId, permission}
+                    permissions{
+                        resourceId
+                        permissions {
+                            operation
+                            operationName
+                            exclude
+                        }
+                    }
                     userIds
                     createdAt
                     updatedAt
                     updatedBy
+                    ownerId
                 }
             }
         """
-        variables = {"roleId": "27fae565-efaf-11eb-a5cd-d79a21e9d8bf"}
+        variables = {"roleId": "8f49e614-04e9-11ec-942b-4ccc6a30d0dc"}
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
         logger.info(response)
@@ -470,7 +429,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.authorize(request, None)
         print("Response:", response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_verify_permissions(self):
         request = {
             "resource": "/{area}/{endpoint_id}/{proxy+}",

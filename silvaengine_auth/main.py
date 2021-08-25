@@ -50,7 +50,10 @@ def deploy() -> list:
                             "label": "Delete relationship",
                         },
                     ],
-                    "query": [{"action": "roles", "label": "View Roles"}],
+                    "query": [
+                        {"action": "roles", "label": "View Roles"},
+                        {"action": "role", "label": "View Role"},
+                    ],
                     "type": "RequestResponse",
                     "support_methods": ["POST"],
                     "is_auth_required": True,
