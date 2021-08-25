@@ -70,6 +70,7 @@ def deploy() -> list:
                     "support_methods": ["POST"],
                     "is_auth_required": False,
                     "is_graphql": True,
+                    "disabled_in_resources": True,
                 },
             },
         }
