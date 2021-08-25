@@ -427,8 +427,18 @@ def _verify_permission(event, context):
             raise Exception("The user is not assigned any roles", 400)
 
         for item in flatten_ast:
-            operation_name = item.get("operation_name")
-            operation = item.get("operation")
+            if not item.get("operation_name"):
+                default = ""
+
+                if type(item.get("fields", {}).get("/")) is list and len(
+                    item.get("fields", {}).get("/")
+                ):
+                    default = item.get("fields", {}).get("/")[0]
+
+                item["operation_name"] = default
+
+            operation_name = item.get("operation_name", "")
+            operation = item.get("operation", "")
 
             # Check the operation type is be included by function settings
             if (
@@ -444,12 +454,6 @@ def _verify_permission(event, context):
                         for operation_name in function_operations.get(operation)
                     ]
                 )
-            )
-
-            print(
-                operation_name.strip().lower(),
-                function_operations,
-                operation_name.strip().lower() not in function_operations,
             )
 
             if (
@@ -663,8 +667,8 @@ def _get_user_permissions(authorizer):
                 continue
 
             function_name = getattr(resource, "function")
-            operations = getattr(resource, "operations")
-            print(operations)
+            # operations = getattr(resource, "operations")
+            # print(operations)
 
             if not result.get(function_name):
                 result[function_name] = []
