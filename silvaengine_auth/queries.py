@@ -34,8 +34,6 @@ def _resolve_roles(info, **kwargs):
     if results.total_count < 1:
         return None
 
-    last_evaluated_key = results.last_evaluated_key
-
     return RolesType(
         items=[
             RoleType(**Utility.json_loads(Utility.json_dumps(role))) for role in roles
