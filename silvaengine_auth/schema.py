@@ -48,7 +48,7 @@ class RoleQuery(ObjectType):
     roles = Field(
         RolesType,
         limit=Int(),
-        owner_id=String(),
+        owner_id=String(required=True),
         last_evaluated_key=JSON(),
     )
 

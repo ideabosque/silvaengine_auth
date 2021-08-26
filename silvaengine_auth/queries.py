@@ -4,7 +4,7 @@ from importlib import import_module
 from silvaengine_utility import Utility
 from jose import jwk, jwt
 from .types import RoleType, RolesType, CertificateType
-from .models import RoleModel
+from .models import RelationshipModel, RoleModel
 from .handlers import _get_user_permissions
 
 
@@ -14,7 +14,12 @@ def _resolve_roles(info, **kwargs):
     filter_conditions = None
 
     if kwargs.get("owner_id"):
-        filter_conditions = RoleModel.owner_id == str(kwargs.get("owner_id")).strip()
+        if str(kwargs.get("owner_id")).strip() == "":
+            filter_conditions = RoleModel.owner_id.does_not_exist()
+        else:
+            filter_conditions = (
+                RoleModel.owner_id == str(kwargs.get("owner_id")).strip()
+            )
 
     results = RoleModel.scan(
         filter_condition=filter_conditions,
