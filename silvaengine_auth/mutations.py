@@ -1,5 +1,5 @@
 import traceback
-from graphene import Field, Mutation
+from graphene import Field, Mutation, String, Boolean
 from silvaengine_utility import Utility
 from .types import RoleType, RoleInputType, RelationshipType, RelationshipInputType
 from .handlers import (
@@ -59,16 +59,16 @@ class UpdateRole(Mutation):
 
 # Delete role
 class DeleteRole(Mutation):
-    role = Field(RoleType)
+    ok = Boolean()
 
     class Arguments:
-        role_input = RoleInputType(required=True)
+        role_id = String(required=True)
 
     @staticmethod
-    def mutate(root, info, role_input=None):
+    def mutate(root, info, **kwargs):
         try:
-            _delete_role_handler(info, role_input)
-            return DeleteRole(role=None)
+            _delete_role_handler(info, kwargs.get("role_id"))
+            return DeleteRole(ok=True)
         except Exception as e:
             info.context.get("logger").exception(traceback.format_exc())
             raise e
@@ -122,16 +122,16 @@ class UpdateRelationship(Mutation):
 
 # Delete relationship
 class DeleteRelationship(Mutation):
-    relationship = Field(RelationshipType)
+    ok = Boolean()
 
     class Arguments:
-        input = RelationshipInputType(required=True)
+        relationship_id = String(required=True)
 
     @staticmethod
-    def mutate(root, info, input=None):
+    def mutate(root, info, **kwargs):
         try:
-            _delete_relationship_handler(info, input)
-            return DeleteRelationship(relationship=None)
+            _delete_relationship_handler(info, kwargs.get("relationship_id"))
+            return DeleteRelationship(ok=True)
         except Exception as e:
             info.context.get("logger").exception(traceback.format_exc())
             raise e

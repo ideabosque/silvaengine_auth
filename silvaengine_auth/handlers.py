@@ -91,21 +91,24 @@ def _update_role_handler(info, role_input):
         raise e
 
 
-def _delete_role_handler(info, role_input):
+def _delete_role_handler(info, role_id):
     try:
-        validate_required(["role_id"], role_input)
-        owner_id = get_seller_id(info)
-        condition = (RoleModel.role_id == role_input.role_id) & (
-            RoleModel.owner_id == owner_id
-        )
+        if role_id is None or str(role_id).strip() == "":
+            raise Exception("`roleId` is required", 400)
 
-        if owner_id is None:
-            condition = (RoleModel.role_id == role_input.role_id) & (
-                RoleModel.owner_id.does_not_exist()
-            )
+        # owner_id = get_seller_id(info)
+        condition = RoleModel.role_id == role_id
+        # condition = (RoleModel.role_id == role_input.role_id) & (
+        #     RoleModel.owner_id == owner_id
+        # )
+
+        # if owner_id is None:
+        #     condition = (RoleModel.role_id == role_input.role_id) & (
+        #         RoleModel.owner_id.does_not_exist()
+        #     )
 
         # Delete the role record.
-        return RoleModel(role_input.role_id).delete(condition=condition)
+        return RoleModel(role_id).delete(condition=condition)
     except Exception as e:
         raise e
 
@@ -178,12 +181,13 @@ def _update_relationship_handler(info, input):
         raise e
 
 
-def _delete_relationship_handler(info, input):
+def _delete_relationship_handler(info, relationship_id):
     try:
-        validate_required(["relationship_id"], input)
+        if relationship_id is None or str(relationship_id).strip() == "":
+            raise Exception("`roleId` is required", 400)
 
         # Delete the group/user/role relationship.
-        return RelationshipModel(input.relationship_id).delete()
+        return RelationshipModel(relationship_id).delete()
     except Exception as e:
         raise e
 

@@ -83,7 +83,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_get_role_graphql(self):
         query = """
             query role( $roleId: String!){
@@ -236,24 +236,18 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_delete_role(self):
         mutation = """
-            mutation deleteRole(
-                    $roleId: String,
-                ) {
-                deleteRole(
-                    roleInput:{
-                        roleId: $roleId,
-                    }
-                ){
-
+            mutation deleteRole($roleId: String!) {
+                deleteRole (roleId: $roleId) {
+                    ok
                 }
             }
         """
 
         variables = {
-            "roleId": "56ff4230-03dc-11ec-8258-0242ac120002",
+            "roleId": "0bb5ac30-05d0-11ec-857e-77b8f7529547",
         }
 
         payload = {"mutation": mutation, "variables": variables}
