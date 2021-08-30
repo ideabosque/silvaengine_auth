@@ -77,8 +77,25 @@ class RelationshipType(ObjectType):
     status = Boolean()
 
 
+class UserRelationshipType(ObjectType):
+    relationship_id = String()
+    group_id = String()
+    user_id = String()
+    user = JSON()
+    role_id = String()
+    created_at = DateTime()
+    updated_at = DateTime()
+    updated_by = String()
+    status = Boolean()
+
+
 class RelationshipsType(ObjectType):
     items = List(RelationshipType)
+    last_evaluated_key = JSON()
+
+
+class UserRelationshipsType(ObjectType):
+    items = List(UserRelationshipType)
     last_evaluated_key = JSON()
 
 

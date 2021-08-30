@@ -11,8 +11,9 @@ from .types import (
     RolesType,
     CertificateType,
     RelationshipsType,
+    UserRelationshipsType,
 )
-from .queries import _resolve_roles, _resolve_role, _resolve_certificate
+from .queries import _resolve_roles, _resolve_role, _resolve_certificate, _resolve_users
 from .mutations import (
     CreateRole,
     UpdateRole,
@@ -24,7 +25,7 @@ from .mutations import (
 
 
 def role_type_class():
-    return [RolesType, RoleType, RelationshipsType]
+    return [RolesType, RoleType, RelationshipsType, UserRelationshipsType]
 
 
 def certificate_type_class():
@@ -57,11 +58,23 @@ class RoleQuery(ObjectType):
         role_id=String(),
     )
 
+    users = Field(
+        UserRelationshipsType,
+        limit=Int(),
+        owner_id=String(required=True),
+        role_id=String(),
+        group_id=String(),
+        last_evaluated_key=JSON(),
+    )
+
     def resolve_roles(self, info, **kwargs):
         return _resolve_roles(info, **kwargs)
 
     def resolve_role(self, info, **kwargs):
         return _resolve_role(info, **kwargs)
+
+    def resolve_users(self, info, **kwargs):
+        return _resolve_users(info, **kwargs)
 
 
 # Modify role / relation list or role / relation

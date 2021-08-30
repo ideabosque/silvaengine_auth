@@ -3,50 +3,177 @@ from importlib.util import find_spec
 from importlib import import_module
 from silvaengine_utility import Utility
 from jose import jwk, jwt
-from .types import RoleType, RolesType, CertificateType
+from .types import (
+    RelationshipType,
+    RoleType,
+    RolesType,
+    CertificateType,
+    UserRelationshipType,
+    UserRelationshipsType,
+)
 from .models import RelationshipModel, RoleModel
 from .handlers import _get_user_permissions
 
 
+# @TODO: Apply status check
 def _resolve_roles(info, **kwargs):
-    limit = kwargs.get("limit")
-    last_evaluated_key = kwargs.get("last_evaluated_key")
-    filter_conditions = None
+    try:
+        limit = kwargs.get("limit")
+        last_evaluated_key = kwargs.get("last_evaluated_key")
+        filter_conditions = None
 
-    if kwargs.get("owner_id"):
+        if kwargs.get("owner_id"):
+            if str(kwargs.get("owner_id")).strip() == "":
+                filter_conditions = RoleModel.owner_id.does_not_exist()
+            else:
+                filter_conditions = (
+                    RoleModel.owner_id == str(kwargs.get("owner_id")).strip()
+                )
+
+        if last_evaluated_key:
+            last_evaluated_key = Utility.json_loads(
+                Utility.json_dumps(last_evaluated_key)
+            )
+
+        results = RoleModel.scan(
+            filter_condition=filter_conditions,
+            limit=int(limit),
+            last_evaluated_key=last_evaluated_key,
+        )
+
+        roles = [
+            RoleType(
+                **Utility.json_loads(
+                    Utility.json_dumps(dict(**role.__dict__["attribute_values"]))
+                )
+            )
+            for role in results
+        ]
+
+        if results.total_count < 1:
+            return None
+
+        return RolesType(
+            items=roles,
+            last_evaluated_key=Utility.json_loads(
+                Utility.json_dumps(results.last_evaluated_key)
+            ),
+        )
+    except Exception as e:
+        raise e
+
+
+# @TODO: Apply status check
+def _resolve_users(info, **kwargs):
+    try:
+        limit = kwargs.get("limit")
+        last_evaluated_key = kwargs.get("last_evaluated_key")
+        filter_conditions = RoleModel.owner_id == str(kwargs.get("owner_id")).strip()
+
+        # owner id
         if str(kwargs.get("owner_id")).strip() == "":
             filter_conditions = RoleModel.owner_id.does_not_exist()
-        else:
+
+        # Query role IDs by owner id
+        role_ids = [
+            str(role.role_id).strip()
+            for role in RoleModel.scan(filter_condition=filter_conditions)
+        ]
+
+        if len(role_ids) < 1:
+            raise Exception(
+                "There are currently no roles available for the seller", 406
+            )
+
+        filter_conditions = RelationshipModel.role_id.is_in(*role_ids)
+
+        # If the role IDs don't include the role id which pass by top layer
+        if kwargs.get("role_id"):
+            if str(kwargs.get("role_id")).strip() not in role_ids:
+                raise Exception(
+                    "The specified role does not belong to the specified owner", 400
+                )
+
             filter_conditions = (
-                RoleModel.owner_id == str(kwargs.get("owner_id")).strip()
+                RelationshipModel.role_id == str(kwargs.get("role_id")).strip()
             )
 
-    results = RoleModel.scan(
-        filter_condition=filter_conditions,
-        limit=int(limit),
-        last_evaluated_key=last_evaluated_key,
-    )
-
-    roles = [
-        RoleType(
-            **Utility.json_loads(
-                Utility.json_dumps(dict(**role.__dict__["attribute_values"]))
+        if last_evaluated_key:
+            last_evaluated_key = Utility.json_loads(
+                Utility.json_dumps(last_evaluated_key)
             )
+
+        if str(kwargs.get("group_id", "")).strip() != "":
+            filter_conditions = filter_conditions & (
+                RelationshipModel.group_id == str(kwargs.get("group_id")).strip()
+            )
+
+        results = RelationshipModel.scan(
+            filter_condition=filter_conditions,
+            limit=int(limit),
+            last_evaluated_key=last_evaluated_key,
         )
-        for role in results
-    ]
+        relationships = [
+            UserRelationshipType(
+                **Utility.json_loads(
+                    Utility.json_dumps(
+                        dict(**relationship.__dict__["attribute_values"])
+                    )
+                )
+            )
+            for relationship in results
+        ]
 
-    if results.total_count < 1:
-        return None
+        if len(relationships) < 1:
+            raise Exception("No matching data found", 406)
 
-    return RolesType(
-        items=[
-            RoleType(**Utility.json_loads(Utility.json_dumps(role))) for role in roles
-        ],
-        last_evaluated_key=Utility.json_loads(
-            Utility.json_dumps(results.last_evaluated_key)
-        ),
-    )
+        hooks = (
+            [
+                hook.strip()
+                for hook in info.context.get("setting").get("custom_hooks").split(",")
+            ]
+            if info.context.get("setting", {}).get("custom_hooks")
+            else []
+        )
+
+        if len(hooks):
+            logger = info.context.get("logger")
+
+            for hook in hooks:
+                fragments = hook.split(":", 3)
+
+                if len(fragments) < 3:
+                    for i in (0, 3 - len(fragments)):
+                        fragments.append(None)
+                elif len(fragments) > 3:
+                    fragments = fragments[0:3]
+
+                module_name, class_name, function_name = fragments
+                users = Utility.import_dynamically(
+                    module_name, function_name, class_name, {"logger": logger}
+                )([relationship.user_id for relationship in relationships])
+                items = []
+
+                if len(users):
+                    for relationship in relationships:
+                        if relationship.user_id and users.get(relationship.user_id):
+                            relationship.user = users.get(relationship.user_id)
+
+                        items.append(relationship)
+
+                relationships = items
+
+        if results.total_count < 1:
+            return None
+
+        return UserRelationshipsType(
+            items=relationships,
+            last_evaluated_key=Utility.json_loads(
+                Utility.json_dumps(results.last_evaluated_key)
+            ),
+        )
+    except Exception as e:
+        raise e
 
 
 def _resolve_role(info, **kwargs):

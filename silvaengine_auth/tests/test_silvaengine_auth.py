@@ -19,6 +19,7 @@ setting = {
     "aws_secret_access_key": os.getenv("aws_secret_access_key"),
     "app_client_id": os.getenv("app_client_id"),
     "app_client_secret": os.getenv("app_client_secret"),
+    "custom_hooks": "relation_engine:RelationEngine:get_users_by_cognito_user_id",
 }
 
 sys.path.insert(0, "/var/www/projects/silvaengine_auth")
@@ -111,10 +112,46 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # post / put / patch / delete <===> query / update / create / delete
-    # put/patch === update
-    # post == insert / create
-    # delete == delete
+    # @unittest.skip("demonstrating skipping")
+    def test_get_relationships_graphql(self):
+        variables = {
+            "ownerId": "2018",
+            "groupId": "357",
+            # "roleId": "91be8b69-04e9-11ec-bd20-4ccc6a30d0dc",
+            "limit": 20,
+        }
+
+        query = """
+            query users(
+                    $limit: Int
+                    $lastEvaluatedKey: JSON
+                    $ownerId: String!
+                    $roleId: String
+                    $groupId: String
+                ){
+                users(
+                    limit: $limit
+                    lastEvaluatedKey: $lastEvaluatedKey
+                    ownerId: $ownerId
+                    roleId: $roleId
+                    groupId: $groupId
+                ){
+                    items {
+                        relationshipId
+                        groupId
+                        roleId
+                        userId
+                        status
+                        user
+                    }
+                    lastEvaluatedKey
+                }
+            }
+        """
+
+        payload = {"query": query, "variables": variables}
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
 
     @unittest.skip("demonstrating skipping")
     def test_create_role(self):
