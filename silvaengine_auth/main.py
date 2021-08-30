@@ -53,6 +53,7 @@ def deploy() -> list:
                     "query": [
                         {"action": "roles", "label": "View Roles"},
                         {"action": "role", "label": "View Role"},
+                        {"action": "users", "label": "Query permission relationships"},
                     ],
                     "type": "RequestResponse",
                     "support_methods": ["POST"],
