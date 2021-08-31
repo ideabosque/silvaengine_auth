@@ -28,7 +28,8 @@ def _create_role_handler(info, role_input):
             **{
                 "name": role_input.name,
                 "owner_id": owner_id,
-                "is_admin": is_admin_user(info.context),
+                "type": int(role_input.type),
+                "is_admin": bool(role_input.is_admin),
                 "description": role_input.description,
                 "permissions": role_input.permissions,
                 "created_at": now,

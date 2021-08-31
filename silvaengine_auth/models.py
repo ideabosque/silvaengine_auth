@@ -75,6 +75,8 @@ class RoleModel(TraitModel):
 
     role_id = UnicodeAttribute(hash_key=True)
     owner_id = UnicodeAttribute(null=True)
+    # type: 0 - Normal, 1 - GWI Account Manger, 2 - GWI QC Manager
+    type = NumberAttribute(default=0)
     name = UnicodeAttribute()
     permissions = ListAttribute(of=RoleConstraintMap)
     description = UnicodeAttribute(null=True)
