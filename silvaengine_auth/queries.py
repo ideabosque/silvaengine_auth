@@ -1,4 +1,6 @@
-import boto3, os, hmac, hashlib, base64
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import print_function
 from importlib.util import find_spec
 from importlib import import_module
 from silvaengine_utility import Utility
@@ -13,34 +15,76 @@ from .types import (
 )
 from .models import RelationshipModel, RoleModel
 from .handlers import _get_user_permissions
+import boto3, os, hmac, hashlib, base64
 
 
 # @TODO: Apply status check
 def _resolve_roles(info, **kwargs):
     try:
-        limit = kwargs.get("limit")
-        last_evaluated_key = kwargs.get("last_evaluated_key")
-        filter_conditions = None
+        arguments = {
+            "limit": int(kwargs.get("page_size", 0)),
+            "last_evaluated_key": None,
+            "filter_condition": None,
+        }
+        total = 0
 
-        if kwargs.get("owner_id"):
-            if str(kwargs.get("owner_id")).strip() == "":
-                filter_conditions = RoleModel.owner_id.does_not_exist()
-            else:
-                filter_conditions = (
-                    RoleModel.owner_id == str(kwargs.get("owner_id")).strip()
-                )
+        # Build filter conditions.
+        # @SEE: {"ARGUMENT_NAME": "FIELD_NAME_OF_DATABASE_TABLE", ...}
+        mappings = {
+            "is_admin": "is_admin",
+            "name": "name",
+            "role_description": "description",
+            "role_type": "type",
+            "status": "status",
+        }
+        filter_conditions = []
 
-        if last_evaluated_key:
-            last_evaluated_key = Utility.json_loads(
-                Utility.json_dumps(last_evaluated_key)
+        # Get filter condition from arguments
+        # @TODO: If there is an operation such as `is_in`, this method or mapping must be extended`
+        for argument, field in mappings.items():
+            if kwargs.get(argument) is None or not hasattr(RoleModel, field):
+                continue
+
+            filter_conditions.append(
+                (getattr(RoleModel, field) == kwargs.get(argument))
             )
 
-        results = RoleModel.scan(
-            filter_condition=filter_conditions,
-            limit=int(limit),
-            last_evaluated_key=last_evaluated_key,
-        )
+        if len(filter_conditions):
+            arguments["filter_condition"] = filter_conditions.pop(0)
 
+            for condition in filter_conditions:
+                arguments["filter_condition"] = (
+                    arguments.get("filter_condition") & condition
+                )
+
+        # Count total of roles
+        for _ in RoleModel.scan(filter_condition=arguments.get("filter_condition")):
+            total += 1
+
+        # Pagination.
+        if arguments.get("limit") > 0 and kwargs.get("page_number", 0) > 1:
+            pagination_arguments = {
+                "limit": (int(kwargs.get("page_number", 0)) - 1)
+                * arguments.get("limit"),
+                "last_evaluated_key": None,
+                "filter_condition": arguments.get("filter_condition"),
+            }
+
+            # Skip (int(kwargs.get("page_number", 0)) - 1) rows
+            pagination_results = RoleModel.scan(**pagination_arguments)
+            # Discard the results of the iteration, and extract the cursor of the page offset from the iterator.
+            _ = [role for role in pagination_results]
+            # The iterator needs to be traversed first, and then the pagination cursor can be obtained through `last_evaluated_key` after the traversal is completed.
+            arguments["last_evaluated_key"] = pagination_results.last_evaluated_key
+
+            if (
+                arguments.get("last_evaluated_key") is None
+                or pagination_results.total_count == total
+            ):
+                return None
+
+        # Query role form database.
+        results = RoleModel.scan(**arguments)
         roles = [
             RoleType(
                 **Utility.json_loads(
@@ -50,69 +94,82 @@ def _resolve_roles(info, **kwargs):
             for role in results
         ]
 
-        if results.total_count < 1:
-            return None
-
         return RolesType(
             items=roles,
-            last_evaluated_key=Utility.json_loads(
-                Utility.json_dumps(results.last_evaluated_key)
-            ),
+            page_number=kwargs.get("page_number", 0),
+            page_size=arguments.get("limit"),
+            total=total,
         )
     except Exception as e:
         raise e
 
 
 # @TODO: Apply status check
+# Query users by relationship.
 def _resolve_users(info, **kwargs):
     try:
-        limit = kwargs.get("limit")
-        last_evaluated_key = kwargs.get("last_evaluated_key")
-        filter_conditions = RoleModel.owner_id == str(kwargs.get("owner_id")).strip()
+        arguments = {
+            "limit": int(kwargs.get("page_size", 0)),
+            "last_evaluated_key": None,
+            "filter_condition": None,
+        }
+        total = 0
+        # Build filter conditions.
+        # @SEE: {"ARGUMENT_NAME": "FIELD_NAME_OF_DATABASE_TABLE", ...}
+        mappings = {
+            "role_id": "role_id",
+            "group_id": "group_id",
+            "status": "status",
+        }
+        filter_conditions = []
 
-        # owner id
-        if str(kwargs.get("owner_id")).strip() == "":
-            filter_conditions = RoleModel.owner_id.does_not_exist()
+        # Get filter condition from arguments
+        for argument, field in mappings.items():
+            if kwargs.get(argument) is None or not hasattr(RelationshipModel, field):
+                continue
 
-        # Query role IDs by owner id
-        role_ids = [
-            str(role.role_id).strip()
-            for role in RoleModel.scan(filter_condition=filter_conditions)
-        ]
-
-        if len(role_ids) < 1:
-            raise Exception(
-                "There are currently no roles available for the seller", 406
+            filter_conditions.append(
+                getattr(RelationshipModel, field) == kwargs.get(argument)
             )
 
-        filter_conditions = RelationshipModel.role_id.is_in(*role_ids)
+        # Join the filter conditions
+        if len(filter_conditions):
+            arguments["filter_condition"] = filter_conditions.pop(0)
 
-        # If the role IDs don't include the role id which pass by top layer
-        if kwargs.get("role_id"):
-            if str(kwargs.get("role_id")).strip() not in role_ids:
-                raise Exception(
-                    "The specified role does not belong to the specified owner", 400
+            for condition in filter_conditions:
+                arguments["filter_condition"] = arguments.get("filter_condition") & (
+                    condition
                 )
 
-            filter_conditions = (
-                RelationshipModel.role_id == str(kwargs.get("role_id")).strip()
-            )
+        # Count total of roles
+        for _ in RelationshipModel.scan(
+            filter_condition=arguments.get("filter_condition")
+        ):
+            total += 1
 
-        if last_evaluated_key:
-            last_evaluated_key = Utility.json_loads(
-                Utility.json_dumps(last_evaluated_key)
-            )
+        # Pagination.
+        if arguments.get("limit") > 0 and kwargs.get("page_number", 0) > 1:
+            pagination_arguments = {
+                "limit": (int(kwargs.get("page_number", 0)) - 1)
+                * arguments.get("limit"),
+                "last_evaluated_key": None,
+                "filter_condition": arguments.get("filter_condition"),
+            }
 
-        if str(kwargs.get("group_id", "")).strip() != "":
-            filter_conditions = filter_conditions & (
-                RelationshipModel.group_id == str(kwargs.get("group_id")).strip()
-            )
+            # Skip (int(kwargs.get("page_number", 0)) - 1) rows
+            pagination_results = RelationshipModel.scan(**pagination_arguments)
+            # Discard the results of the iteration, and extract the cursor of the page offset from the iterator.
+            _ = [role for role in pagination_results]
+            arguments["last_evaluated_key"] = pagination_results.last_evaluated_key
 
-        results = RelationshipModel.scan(
-            filter_condition=filter_conditions,
-            limit=int(limit),
-            last_evaluated_key=last_evaluated_key,
-        )
+            if (
+                arguments.get("last_evaluated_key") is None
+                or pagination_results.total_count == total
+            ):
+                return None
+
+        # Query data from the database.
+        results = RelationshipModel.scan(**arguments)
         relationships = [
             UserRelationshipType(
                 **Utility.json_loads(
@@ -124,8 +181,8 @@ def _resolve_users(info, **kwargs):
             for relationship in results
         ]
 
-        if len(relationships) < 1:
-            raise Exception("No matching data found", 406)
+        if results.total_count < 1:
+            return None
 
         hooks = (
             [
@@ -163,32 +220,26 @@ def _resolve_users(info, **kwargs):
 
                 relationships = items
 
-        if results.total_count < 1:
-            return None
-
         return UserRelationshipsType(
             items=relationships,
-            last_evaluated_key=Utility.json_loads(
-                Utility.json_dumps(results.last_evaluated_key)
-            ),
+            page_number=kwargs.get("page_number", 0),
+            page_size=arguments.get("limit"),
+            total=total,
         )
     except Exception as e:
         raise e
 
 
+# Query role info by specified ID.
 def _resolve_role(info, **kwargs):
-    role_id = kwargs.get("role_id")
+    role = RoleModel.get(kwargs.get("role_id"))
 
-    if role_id:
-        role = RoleModel.get(role_id)
-
-        return RoleType(
-            **Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
-        )
-
-    return None
+    return RoleType(
+        **Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
+    )
 
 
+# Login
 def _resolve_certificate(info, **kwargs):
     try:
         username = kwargs.get("username")

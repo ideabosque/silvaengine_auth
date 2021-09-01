@@ -1,10 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-
-__author__ = "bl"
-
-import os
 from pynamodb.models import Model
 from pynamodb.attributes import (
     ListAttribute,
@@ -14,6 +10,9 @@ from pynamodb.attributes import (
     UTCDateTimeAttribute,
     NumberAttribute,
 )
+import os
+
+__author__ = "bl"
 
 
 class BaseModel(Model):
@@ -74,7 +73,6 @@ class RoleModel(TraitModel):
         table_name = "se-roles"
 
     role_id = UnicodeAttribute(hash_key=True)
-    owner_id = UnicodeAttribute(null=True)
     # type: 0 - Normal, 1 - GWI Account Manger, 2 - GWI QC Manager
     type = NumberAttribute(default=0)
     name = UnicodeAttribute()

@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-from graphene.types.dynamic import Dynamic
-from sqlalchemy.orm import relationship
 from silvaengine_utility import JSON
 
 __author__ = "bl"
@@ -15,7 +13,6 @@ from graphene import (
     DateTime,
     List,
     Int,
-    Field,
     Boolean,
 )
 from silvaengine_utility import JSON
@@ -38,8 +35,8 @@ class ConstraintInputType(InputObjectType):
 
 
 class PermissionType(ObjectType):
-    resource_id = String()
-    permissions = List(ConstraintType)
+    resource_id = String(required=True)
+    permissions = List(ConstraintType, required=True)
 
 
 class PermissionInputType(InputObjectType):
@@ -49,21 +46,23 @@ class PermissionInputType(InputObjectType):
 
 class RoleType(ObjectType):
     role_id = String()
+    type = Int()
     name = String()
-    owner_id = String()
     description = String()
     permissions = List(PermissionType)
     is_admin = Boolean()
-    user_ids = List(String)
+    status = Boolean()
+    updated_by = String()
     created_at = DateTime()
     updated_at = DateTime()
-    updated_by = String()
-    status = Boolean()
 
 
 class RolesType(ObjectType):
     items = List(RoleType)
-    last_evaluated_key = JSON()
+    page_size = Int()
+    page_number = Int()
+    total = Int()
+    # last_evaluated_key = JSON()
 
 
 class RelationshipType(ObjectType):
@@ -91,24 +90,18 @@ class UserRelationshipType(ObjectType):
 
 class RelationshipsType(ObjectType):
     items = List(RelationshipType)
-    last_evaluated_key = JSON()
+    page_size = Int()
+    page_number = Int()
+    total = Int()
+    # last_evaluated_key = JSON()
 
 
 class UserRelationshipsType(ObjectType):
     items = List(UserRelationshipType)
-    last_evaluated_key = JSON()
-
-
-class RoleInputType(InputObjectType):
-    role_id = String()
-    owner_id = String()
-    name = String()
-    description = String()
-    is_admin = Boolean()
-    permissions = List(PermissionInputType)
-    user_ids = List(String)
-    updated_by = String()
-    status = Boolean()
+    page_size = Int()
+    page_number = Int()
+    total = Int()
+    # last_evaluated_key = JSON()
 
 
 class CertificateType(ObjectType):
@@ -119,12 +112,3 @@ class CertificateType(ObjectType):
     token_type = String()
     permissions = JSON()
     context = JSON()
-
-
-class RelationshipInputType(InputObjectType):
-    relationship_id = String()
-    group_id = String()
-    user_id = String()
-    role_id = String()
-    updated_by = String()
-    status = Boolean()

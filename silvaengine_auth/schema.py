@@ -1,10 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-
-__author__ = "bl"
-
-from graphene import ObjectType, String, Int, Schema, Field
+from graphene import ObjectType, String, Int, Schema, Field, Boolean
 from silvaengine_utility import JSON
 from .types import (
     RoleType,
@@ -23,6 +20,8 @@ from .mutations import (
     DeleteRelationship,
 )
 
+__author__ = "bl"
+
 
 def role_type_class():
     return [RolesType, RoleType, RelationshipsType, UserRelationshipsType]
@@ -36,8 +35,8 @@ def certificate_type_class():
 class CertificateQuery(ObjectType):
     certificate = Field(
         CertificateType,
-        username=String(),
-        password=String(),
+        username=String(required=True),
+        password=String(required=True),
     )
 
     def resolve_certificate(self, info, **kwargs):
@@ -48,23 +47,29 @@ class CertificateQuery(ObjectType):
 class RoleQuery(ObjectType):
     roles = Field(
         RolesType,
-        limit=Int(),
-        owner_id=String(required=True),
-        last_evaluated_key=JSON(),
+        page_size=Int(),
+        page_number=Int(),
+        is_admin=Boolean(),
+        name=String(),
+        role_description=String(),
+        role_type=Int(),
+        status=Boolean()
+        # last_evaluated_key=JSON(),
     )
 
     role = Field(
         RoleType,
-        role_id=String(),
+        role_id=String(required=True),
     )
 
     users = Field(
         UserRelationshipsType,
-        limit=Int(),
-        owner_id=String(required=True),
+        page_size=Int(),
+        page_number=Int(),
+        status=Boolean(),
         role_id=String(),
         group_id=String(),
-        last_evaluated_key=JSON(),
+        # last_evaluated_key=JSON(),
     )
 
     def resolve_roles(self, info, **kwargs):

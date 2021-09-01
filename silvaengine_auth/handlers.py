@@ -1,41 +1,39 @@
-from re import T
-import uuid, json, time, urllib.request, os
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import print_function
 from datetime import datetime
-from graphene.types import field
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 from jose.constants import ALGORITHMS
 from hashlib import md5
 from importlib.util import find_spec
 from importlib import import_module
-from pynamodb.expressions.condition import Condition
 from silvaengine_utility import Utility, Graphql, Authorizer
 from silvaengine_resource import ResourceModel
 from .utils import validate_required, get_seller_id, is_admin_user
 from .models import ConnectionModel, RelationshipModel, RoleModel, ConfigDataModel
+from event_recorder import Recorder
+import uuid, json, time, urllib.request, os
 
 
-def _create_role_handler(info, role_input):
+# Create role
+def _create_role_handler(info, kwargs):
     try:
         role_id = str(uuid.uuid1())
-        # owner_id = role_input.owner_id if role_input.owner_id is not None else ""
-        owner_id = get_seller_id(info.context)
         now = datetime.utcnow()
-        status = bool(role_input.status)
 
         RoleModel(
             role_id,
             **{
-                "name": role_input.name,
-                "owner_id": owner_id,
-                "type": int(role_input.type),
-                "is_admin": bool(role_input.is_admin),
-                "description": role_input.description,
-                "permissions": role_input.permissions,
+                "name": kwargs.get("name"),
+                "type": int(kwargs.get("role_type", 0)),
+                "is_admin": bool(kwargs.get("is_admin", True)),
+                "permissions": kwargs.get("permissions", []),
+                "description": kwargs.get("role_description"),
+                "status": bool(kwargs.get("status", True)),
+                "updated_by": kwargs.get("updated_by"),
                 "created_at": now,
                 "updated_at": now,
-                "updated_by": role_input.updated_by,
-                "status": status,
             },
         ).save()
 
@@ -44,69 +42,51 @@ def _create_role_handler(info, role_input):
         raise e
 
 
-def _update_role_handler(info, role_input):
+# Update role for specified ID.
+def _update_role_handler(info, kwargs):
     try:
-        validate_required(["role_id"], role_input)
-
-        role = RoleModel(role_input.role_id)
+        role = RoleModel(kwargs.get("role_id"))
         actions = [
             RoleModel.updated_at.set(datetime.utcnow()),
         ]
-        fields = [
-            "name",
-            "updated_by",
-            # "owner_id",
-            "is_admin",
-            "description",
-            "permissions",
-            "status",
-        ]
-        owner_id = get_seller_id(info)
-        condition = (RoleModel.role_id == role_input.role_id) & (
-            RoleModel.owner_id == owner_id
-        )
-
-        if owner_id is None:
-            condition = (RoleModel.role_id == role_input.role_id) & (
-                RoleModel.owner_id.does_not_exist()
-            )
+        mappings = {
+            "name": "name",
+            "is_admin": "is_admin",
+            "role_type": "type",
+            "role_description": "description",
+            "permissions": "permissions",
+            "status": "status",
+            "updated_by": "updated_by",
+        }
 
         need_update = False
 
-        for field in fields:
-            if hasattr(role_input, field) and getattr(role_input, field):
+        for argument, field in mappings.items():
+            if kwargs.get(argument):
                 need_update = True
 
-                actions.append(
-                    getattr(RoleModel, field).set(getattr(role_input, field))
-                )
+                actions.append(getattr(RoleModel, field).set(kwargs.get(argument)))
 
         if need_update:
+            condition = RoleModel.role_id == kwargs.get("role_id")
+
             role.update(
                 actions=actions,
                 condition=condition,
             )
 
-        return RoleModel.get(role_input.role_id, None)
+        return RoleModel.get(kwargs.get("role_id"), None)
     except Exception as e:
         raise e
 
 
+# Delete role by specified ID.
 def _delete_role_handler(info, role_id):
     try:
         if role_id is None or str(role_id).strip() == "":
             raise Exception("`roleId` is required", 400)
 
-        # owner_id = get_seller_id(info)
         condition = RoleModel.role_id == role_id
-        # condition = (RoleModel.role_id == role_input.role_id) & (
-        #     RoleModel.owner_id == owner_id
-        # )
-
-        # if owner_id is None:
-        #     condition = (RoleModel.role_id == role_input.role_id) & (
-        #         RoleModel.owner_id.does_not_exist()
-        #     )
 
         # Delete the role record.
         return RoleModel(role_id).delete(condition=condition)
@@ -114,42 +94,34 @@ def _delete_role_handler(info, role_id):
         raise e
 
 
-def _create_relationship_handler(info, input):
+# Create relationship of role / group / user.
+def _create_relationship_handler(info, kwargs):
     try:
-        validate_required(["group_id", "user_id", "role_id"], input)
-
         relationship_id = str(uuid.uuid1())
+        now = datetime.utcnow()
 
         RelationshipModel(
             relationship_id,
             **{
-                "user_id": input.user_id,
-                "role_id": input.role_id,
-                "group_id": input.group_id,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
-                "updated_by": input.updated_by,
-                "status": bool(input.status),
+                "user_id": kwargs.get("user_id"),
+                "role_id": kwargs.get("role_id"),
+                "group_id": kwargs.get("group_id"),
+                "created_at": now,
+                "updated_at": now,
+                "updated_by": kwargs.get("updated_by"),
+                "status": bool(kwargs.get("status", True)),
             },
         ).save()
-
-        # relationship_id = "a6bd834c-fa75-11eb-8633-0242ac120002"
-        # conditions = RelationshipModel.group_id.does_not_exist()
-        # relationships = RelationshipModel.scan(conditions)
-
-        # for r in relationships:
-        #     print(r.group_id, r.role_id)
 
         return RelationshipModel.get(relationship_id)
     except Exception as e:
         raise e
 
 
-def _update_relationship_handler(info, input):
+# Update relationship for specified ID.
+def _update_relationship_handler(info, kwargs):
     try:
-        validate_required(["relationship_id"], input)
-
-        relationship = RelationshipModel(input.relationship_id)
+        relationship = RelationshipModel(kwargs.get("relationship_id"))
         actions = [
             RelationshipModel.updated_at.set(datetime.utcnow()),
         ]
@@ -164,28 +136,41 @@ def _update_relationship_handler(info, input):
         need_update = False
 
         for field in fields:
-            if hasattr(input, field) and getattr(input, field):
+            if kwargs.get(field):
                 need_update = True
 
-                actions.append(
-                    getattr(RelationshipModel, field).set(getattr(input, field))
-                )
+                actions.append(getattr(RelationshipModel, field).set(kwargs.get(field)))
 
         if need_update:
+            condition = RelationshipModel.relationship_id == kwargs.get(
+                "relationship_id"
+            )
             relationship.update(
                 actions=actions,
-                condition=RelationshipModel.relationship_id == input.relationship_id,
+                condition=condition,
             )
 
-        return RelationshipModel.get(input.relationship_id)
+        Recorder(info.context.get("logger")).add_event_log(
+            "user",
+            1234,
+            {"name": "test"},
+            "User updated.",
+            12,
+            {"name": "bl"},
+            357,
+            {"name": "ss"},
+        )
+
+        return RelationshipModel.get(kwargs.get("relationship_id"))
     except Exception as e:
         raise e
 
 
+# Delete relationship by specified ID.
 def _delete_relationship_handler(info, relationship_id):
     try:
         if relationship_id is None or str(relationship_id).strip() == "":
-            raise Exception("`roleId` is required", 400)
+            raise Exception("`relationshipId` is required", 400)
 
         # Delete the group/user/role relationship.
         return RelationshipModel(relationship_id).delete()
@@ -364,7 +349,7 @@ def _verify_permission(event, context):
         uid = authorizer.get("sub")
         owner_id = (
             str(authorizer.get("seller_id")).strip()
-            if authorizer.get("seller_id") is not None
+            if authorizer.get("seller_id")
             else ""
         )
         team_id = headers.get("team_id")
@@ -416,17 +401,7 @@ def _verify_permission(event, context):
         if len(role_ids) < 1:
             raise Exception("The user is not assigned any roles", 400)
 
-        filter_conditions = RoleModel.owner_id == str(owner_id)
-
-        if is_admin or owner_id is None or owner_id == "":
-            filter_conditions = RoleModel.owner_id.does_not_exist()
-
-        roles = [
-            role
-            for role in RoleModel.scan(
-                RoleModel.role_id.is_in(*role_ids) & filter_conditions
-            )
-        ]
+        roles = [role for role in RoleModel.scan(RoleModel.role_id.is_in(*role_ids))]
 
         if len(roles) < 1:
             raise Exception("The user is not assigned any roles", 400)
@@ -636,15 +611,7 @@ def _get_user_permissions(authorizer):
         if len(role_ids) < 1:
             return rules
 
-        owner_id = authorizer.get("seller_id")
-        filter_conditions = RoleModel.owner_id == str(owner_id)
-
-        if is_admin or owner_id is None or owner_id == "":
-            filter_conditions = RoleModel.owner_id.does_not_exist()
-
-        for role in RoleModel.scan(
-            RoleModel.role_id.is_in(*role_ids) & filter_conditions
-        ):
+        for role in RoleModel.scan(RoleModel.role_id.is_in(*role_ids)):
             rules += role.permissions
 
         resources = {}

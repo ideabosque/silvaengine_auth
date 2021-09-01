@@ -40,23 +40,24 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
     @unittest.skip("demonstrating skipping")
     def test_get_roles_graphql(self):
-        variables = {
-            "limit": 2,
-            "lastEvaluatedKey": {
-                "role_id": {"S": "19906bba-054b-11ec-9f58-b51b75803bb1"}
-            },
-        }
-
         query = """
             query roles(
-                    $limit: Int
-                    $lastEvaluatedKey: JSON
-                    $ownerId: String
+                    $pageSize: Int
+                    $pageNumber: Int
+                    $isAdmin: Boolean
+                    $status: Boolean
+                    $description: String
+                    $type: Int
+                    $name: String
                 ){
                 roles(
-                    limit: $limit
-                    lastEvaluatedKey: $lastEvaluatedKey
-                    ownerId: $ownerId
+                    pageSize: $pageSize
+                    pageNumber: $pageNumber
+                    isAdmin: $isAdmin
+                    status: $status
+                    roleDescription: $description
+                    roleType: $type
+                    name: $name
                 ){
                     items {
                         roleId
@@ -69,17 +70,29 @@ class SilvaEngineAuthTest(unittest.TestCase):
                                 exclude
                             }
                         }
-                        userIds
+                        description
+                        isAdmin
+                        status
+                        type
                         createdAt
                         updatedAt
                         updatedBy
-                        ownerId
                     }
-                    lastEvaluatedKey
+                    pageSize
+                    pageNumber
+                    total
                 }
             }
         """
-
+        variables = {
+            "pageSize": 2,
+            "pageNumber": 1,
+            "isAdmin": True,
+            "status": True,
+            "description": None,
+            "type": 0,
+            "name": None,
+        }
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
         logger.info(response)
@@ -99,42 +112,39 @@ class SilvaEngineAuthTest(unittest.TestCase):
                             exclude
                         }
                     }
-                    userIds
+                    description
+                    isAdmin
+                    status
+                    type
                     createdAt
                     updatedAt
                     updatedBy
-                    ownerId
                 }
             }
         """
-        variables = {"roleId": "8f49e614-04e9-11ec-942b-4ccc6a30d0dc"}
+        variables = {
+            "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+        }
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
-    def test_get_relationships_graphql(self):
-        variables = {
-            "ownerId": "2018",
-            "groupId": "357",
-            # "roleId": "91be8b69-04e9-11ec-bd20-4ccc6a30d0dc",
-            "limit": 20,
-        }
-
+    @unittest.skip("demonstrating skipping")
+    def test_get_users_graphql(self):
         query = """
             query users(
-                    $limit: Int
-                    $lastEvaluatedKey: JSON
-                    $ownerId: String!
+                    $pageSize: Int
+                    $pageNumber: Int
                     $roleId: String
                     $groupId: String
+                    $status: Boolean
                 ){
                 users(
-                    limit: $limit
-                    lastEvaluatedKey: $lastEvaluatedKey
-                    ownerId: $ownerId
+                    pageSize: $pageSize
+                    pageNumber: $pageNumber
                     roleId: $roleId
                     groupId: $groupId
+                    status: $status
                 ){
                     items {
                         relationshipId
@@ -144,11 +154,19 @@ class SilvaEngineAuthTest(unittest.TestCase):
                         status
                         user
                     }
-                    lastEvaluatedKey
+                    pageSize
+                    pageNumber
+                    total
                 }
             }
         """
-
+        variables = {
+            "groupId": "357",
+            "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+            "status": True,
+            "pageSize": 20,
+            "pageNumber": 1,
+        }
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
         logger.info(response)
@@ -157,47 +175,53 @@ class SilvaEngineAuthTest(unittest.TestCase):
     def test_create_role(self):
         mutation = """
             mutation createRole(
+                    $type: Int!
+                    $isAdmin: Boolean!
                     $name: String!,
                     $permissions: [PermissionInputType]!
-                    $updatedBy: String!
-                    $description: String!
+                    $updatedBy: String
+                    $dscription: String
                     $status: Boolean
                 ) {
                 createRole(
-                    roleInput:{
-                        name: $name,
-                        permissions: $permissions
-                        updatedBy: $updatedBy
-                        description: $description
-                        status: $status
-                    }
+                    name: $name,
+                    permissions: $permissions
+                    updatedBy: $updatedBy
+                    roleDescription: $dscription
+                    status: $status
+                    roleType: $type
+                    isAdmin: $isAdmin
                 ) {
                     role{
                         roleId
                         name
+                        type
+                        isAdmin
+                        description
                         permissions {
                             resourceId
                             permissions {
+                                operation
                                 operationName
                                 exclude
                             }
                         }
+                        status
                         createdAt
                         updatedAt
                         updatedBy
-                        isAdmin
-                        description
                     }
                 }
             }
         """
 
         variables = {
-            # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
-            "name": "Administrator",
+            "name": "GWI Account Manager",
+            "type": 0,
+            "isAdmin": True,
             "permissions": [
                 {
-                    "resourceId": "053429072013b1fc6eeac9555cd4618b",
+                    "resourceId": "db1d5fcb2d0b692f2a423e2f2ae23247",
                     "permissions": [
                         {
                             "operationName": "paginateProducts",
@@ -213,7 +237,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                 },
             ],
             "updatedBy": "setup",
-            "description": "Product engines",
+            "description": "Product manager",
         }
 
         payload = {"mutation": mutation, "variables": variables}
@@ -228,38 +252,44 @@ class SilvaEngineAuthTest(unittest.TestCase):
                     $permissions: [PermissionInputType]
                 ) {
                 updateRole(
-                    roleInput:{
-                        roleId: $roleId,
-                        permissions: $permissions
-                    }
+                    roleId: $roleId,
+                    permissions: $permissions
                 ) {
                     role{
                         roleId
                         name
-                        permissions{resourceId, permission}
+                        type
+                        isAdmin
+                        description
+                        permissions {
+                            resourceId
+                            permissions {
+                                operation
+                                operationName
+                                exclude
+                            }
+                        }
+                        status
                         createdAt
                         updatedAt
                         updatedBy
-                        isAdmin
-                        description
-                        status
-                        ownerId
                     }
                 }
             }
         """
-
         variables = {
-            "roleId": "56ff4230-03dc-11ec-8258-0242ac120002",
+            "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
             "permissions": [
                 {
-                    "resourceId": "053429072013b1fc6eeac9555cd4618b",
+                    "resourceId": "db1d5fcb2d0b692f2a423e2f2ae23247",
                     "permissions": [
                         {
+                            "operation": "query",
                             "operationName": "paginateProducts",
                             "exclude": [],
                         },
                         {
+                            "operation": "query",
                             "operationName": "showProduct",
                             "exclude": ["companyCode"],
                         },
@@ -267,9 +297,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                 },
             ],
         }
-
         payload = {"mutation": mutation, "variables": variables}
-
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
@@ -282,11 +310,108 @@ class SilvaEngineAuthTest(unittest.TestCase):
                 }
             }
         """
+        variables = {
+            "roleId": "bae6a6a2-0a6d-11ec-8d90-0242ac120002",
+        }
+        payload = {"mutation": mutation, "variables": variables}
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    @unittest.skip("demonstrating skipping")
+    def test_create_relationship(self):
+        mutation = """
+            mutation createRelationship(
+                    $roleId: String!,
+                    $groupId: String,
+                    $userId: String!,
+                    $updatedBy: String
+                    $status: Boolean
+                ) {
+                createRelationship(
+                    groupId: $groupId,
+                    userId: $userId,
+                    roleId: $roleId,
+                    updatedBy: $updatedBy
+                    status: $status
+                ) {
+                    relationship{
+                        relationshipId
+                        groupId
+                        userId
+                        roleId
+                        updatedBy
+                        status
+                    }
+                }
+            }
+        """
+        variables = {
+            "groupId": None,
+            "userId": "076de22a-6eed-4836-b4bb-ec06f1274311",
+            "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+            "updatedBy": "setup",
+            "status": True,
+        }
+        payload = {"mutation": mutation, "variables": variables}
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    # @unittest.skip("demonstrating skipping")
+    def test_update_relationship(self):
+        mutation = """
+            mutation updateRelationship(
+                    $relationshipId: String!,
+                    $groupId: String
+                    $userId: String
+                    $roleId: String
+                    $status: Boolean
+                ) {
+                updateRelationship(
+                    groupId: $groupId,
+                    relationshipId: $relationshipId
+                    userId: $userId
+                    roleId: $roleId
+                    status: $status
+                ) {
+                    relationship{
+                        relationshipId
+                        groupId
+                        userId
+                        roleId
+                        status
+                        updatedBy
+                        updatedAt
+                    }
+                }
+            }
+        """
 
         variables = {
-            "roleId": "0bb5ac30-05d0-11ec-857e-77b8f7529547",
+            "relationshipId": "a00bb2ac-0a70-11ec-8c56-0242ac120002",
+            "groupId": "357",
         }
 
+        payload = {"mutation": mutation, "variables": variables}
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    @unittest.skip("demonstrating skipping")
+    def test_delete_relationship(self):
+        mutation = """
+            mutation deleteRelationship(
+                    $relationshipId: String!
+                ) {
+                deleteRelationship(
+                    relationshipId: $relationshipId
+                ) {
+                    ok
+                }
+            }
+        """
+
+        variables = {
+            "relationshipId": "a00bb2ac-0a70-11ec-8c56-0242ac120002",
+        }
         payload = {"mutation": mutation, "variables": variables}
         response = self.auth.role_graphql(**payload)
         logger.info(response)
@@ -603,106 +728,6 @@ class SilvaEngineAuthTest(unittest.TestCase):
         }
         response = self.auth.verify_permission(request, None)
         print("Response:", response)
-
-    @unittest.skip("demonstrating skipping")
-    def test_create_relationship(self):
-        mutation = """
-            mutation createRelationship(
-                    $groupId: String!,
-                    $userId: String!,
-                    $roleId: String!,
-                    $updatedBy: String!
-                    $status: Boolean
-                ) {
-                createRelationship(
-                    input:{
-                        groupId: $groupId,
-                        userId: $userId,
-                        roleId: $roleId,
-                        updatedBy: $updatedBy
-                        status: $status
-                    }
-                ) {
-                    relationship{
-                        groupId
-                        userId
-                        roleId
-                        updatedBy
-                        status
-                    }
-                }
-            }
-        """
-
-        variables = {
-            # "roleId": "666c6f90-a013-11eb-8016-0242ac120002",
-            "groupId": "357",
-            "userId": "076de22a-6eed-4836-b4bb-ec06f1274311",
-            "roleId": "76633ace-03e0-11ec-8d77-0242ac120002",
-            "updatedBy": "setup",
-            "status": True,
-        }
-
-        payload = {"mutation": mutation, "variables": variables}
-
-        response = self.auth.role_graphql(**payload)
-        logger.info(response)
-
-    @unittest.skip("demonstrating skipping")
-    def test_update_relationship(self):
-        mutation = """
-            mutation updateRelationship(
-                    $relationshipId: String!,
-                    $groupId: String
-                ) {
-                updateRelationship(
-                    input:{
-                        groupId: $groupId,
-                        relationshipId: $relationshipId
-                    }
-                ) {
-                    relationship{
-                        groupId
-                        userId
-                        roleId
-                        updatedBy
-                        status
-                        updatedAt
-                    }
-                }
-            }
-        """
-
-        variables = {
-            "relationshipId": "0b4cf942-fb84-11eb-a0f7-6df87694cc69",
-            "groupId": "357",
-        }
-
-        payload = {"mutation": mutation, "variables": variables}
-
-        response = self.auth.role_graphql(**payload)
-        logger.info(response)
-
-    @unittest.skip("demonstrating skipping")
-    def test_delete_relationship(self):
-        mutation = """
-            mutation deleteRelationship(
-                    $relationshipId: String!
-                ) {
-                deleteRelationship(
-                    relationshipId: $relationshipId
-                ) {
-                    ok
-                }
-            }
-        """
-
-        variables = {"relationshipId": "0b4cf942-fb84-11eb-a0f7-6df87694cc69"}
-
-        payload = {"mutation": mutation, "variables": variables}
-
-        response = self.auth.role_graphql(**payload)
-        logger.info(response)
 
 
 if __name__ == "__main__":
