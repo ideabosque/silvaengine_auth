@@ -132,7 +132,7 @@ def _resolve_users(info, **kwargs):
                 continue
 
             filter_conditions.append(
-                getattr(RelationshipModel, field) == kwargs.get(argument)
+                (getattr(RelationshipModel, field) == kwargs.get(argument))
             )
 
         # Join the filter conditions
@@ -140,8 +140,8 @@ def _resolve_users(info, **kwargs):
             arguments["filter_condition"] = filter_conditions.pop(0)
 
             for condition in filter_conditions:
-                arguments["filter_condition"] = arguments.get("filter_condition") & (
-                    condition
+                arguments["filter_condition"] = (
+                    arguments.get("filter_condition") & condition
                 )
 
         # Count total of roles

@@ -129,7 +129,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_get_users_graphql(self):
         query = """
             query users(
@@ -161,8 +161,8 @@ class SilvaEngineAuthTest(unittest.TestCase):
             }
         """
         variables = {
-            "groupId": "357",
-            "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+            # "groupId": "357",
+            "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
             "status": True,
             "pageSize": 20,
             "pageNumber": 1,
@@ -356,7 +356,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_update_relationship(self):
         mutation = """
             mutation updateRelationship(
