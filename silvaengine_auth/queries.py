@@ -22,7 +22,12 @@ import boto3, os, hmac, hashlib, base64
 def _resolve_roles(info, **kwargs):
     try:
         arguments = {
-            "limit": int(kwargs.get("page_size", 0)),
+            "limit": int(
+                kwargs.get(
+                    "page_size",
+                    info.context.get("setting", {}).get("max_size_per_page", 10),
+                )
+            ),
             "last_evaluated_key": None,
             "filter_condition": None,
         }
@@ -99,7 +104,7 @@ def _resolve_roles(info, **kwargs):
 
         return RolesType(
             items=roles,
-            page_number=kwargs.get("page_number", 0),
+            page_number=kwargs.get("page_number", 1),
             page_size=arguments.get("limit"),
             total=total,
         )
@@ -112,7 +117,12 @@ def _resolve_roles(info, **kwargs):
 def _resolve_users(info, **kwargs):
     try:
         arguments = {
-            "limit": int(kwargs.get("page_size", 10)),
+            "limit": int(
+                kwargs.get(
+                    "page_size",
+                    info.context.get("setting", {}).get("max_size_per_page", 10),
+                )
+            ),
             "last_evaluated_key": None,
             "filter_condition": None,
         }
@@ -225,7 +235,7 @@ def _resolve_users(info, **kwargs):
 
         return UserRelationshipsType(
             items=relationships,
-            page_number=kwargs.get("page_number", 0),
+            page_number=kwargs.get("page_number", 1),
             page_size=arguments.get("limit"),
             total=total,
         )
