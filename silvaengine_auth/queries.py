@@ -94,6 +94,9 @@ def _resolve_roles(info, **kwargs):
             for role in results
         ]
 
+        if results.total_count < 1:
+            return None
+
         return RolesType(
             items=roles,
             page_number=kwargs.get("page_number", 0),
