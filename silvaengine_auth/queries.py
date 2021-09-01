@@ -54,6 +54,17 @@ def _resolve_roles(info, **kwargs):
                 (getattr(RoleModel, field) == kwargs.get(argument))
             )
 
+        if kwargs.get("user_ids"):
+            role_ids = [
+                str(relationship.role_id).strip()
+                for relationship in RelationshipModel.scan(
+                    RelationshipModel.role_id.is_in(*list(set(kwargs.get("user_ids"))))
+                )
+            ]
+
+            if len(role_ids):
+                filter_conditions.append((RoleModel.role_id.is_in(*role_ids)))
+
         if len(filter_conditions):
             arguments["filter_condition"] = filter_conditions.pop(0)
 

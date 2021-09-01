@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-from graphene import ObjectType, String, Int, Schema, Field, Boolean
+from graphene import ObjectType, String, Int, Schema, Field, Boolean, List
 from silvaengine_utility import JSON
 from .types import (
     RoleType,
@@ -53,6 +53,7 @@ class RoleQuery(ObjectType):
         name=String(),
         role_description=String(),
         role_type=Int(),
+        user_ids=List(String),
         status=Boolean()
         # last_evaluated_key=JSON(),
     )
