@@ -112,7 +112,7 @@ def _resolve_roles(info, **kwargs):
 def _resolve_users(info, **kwargs):
     try:
         arguments = {
-            "limit": int(kwargs.get("page_size", 0)),
+            "limit": int(kwargs.get("page_size", 10)),
             "last_evaluated_key": None,
             "filter_condition": None,
         }

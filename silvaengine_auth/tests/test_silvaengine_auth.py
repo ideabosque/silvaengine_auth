@@ -163,9 +163,9 @@ class SilvaEngineAuthTest(unittest.TestCase):
         variables = {
             # "groupId": "357",
             "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
-            "status": True,
-            "pageSize": 20,
-            "pageNumber": 1,
+            # "status": True,
+            # "pageSize": 20,
+            # "pageNumber": 1,
         }
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
