@@ -12,7 +12,6 @@ from silvaengine_utility import Utility, Graphql, Authorizer
 from silvaengine_resource import ResourceModel
 from .utils import validate_required, get_seller_id, is_admin_user
 from .models import ConnectionModel, RelationshipModel, RoleModel, ConfigDataModel
-from event_recorder import Recorder
 import uuid, json, time, urllib.request, os
 
 
@@ -149,17 +148,6 @@ def _update_relationship_handler(info, kwargs):
                 actions=actions,
                 condition=condition,
             )
-
-        Recorder(info.context.get("logger")).add_event_log(
-            "user",
-            1234,
-            {"name": "test"},
-            "User updated.",
-            12,
-            {"name": "bl"},
-            357,
-            {"name": "ss"},
-        )
 
         return RelationshipModel.get(kwargs.get("relationship_id"))
     except Exception as e:
