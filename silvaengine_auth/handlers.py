@@ -61,7 +61,7 @@ def _update_role_handler(info, kwargs):
         need_update = False
 
         for argument, field in mappings.items():
-            if kwargs.get(argument):
+            if kwargs.get(argument) is not None:
                 need_update = True
 
                 actions.append(getattr(RoleModel, field).set(kwargs.get(argument)))
@@ -135,7 +135,7 @@ def _update_relationship_handler(info, kwargs):
         need_update = False
 
         for field in fields:
-            if kwargs.get(field):
+            if kwargs.get(field) is not None:
                 need_update = True
 
                 actions.append(getattr(RelationshipModel, field).set(kwargs.get(field)))
