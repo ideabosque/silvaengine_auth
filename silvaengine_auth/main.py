@@ -17,6 +17,8 @@ from .schema import (
 from .handlers import (
     _verify_permission,
     _authorize_response,
+    _get_roles_by_cognito_user_sub,
+    _get_users_by_role_type,
 )
 
 # Hook function applied to deployment
@@ -171,16 +173,30 @@ class Auth(object):
         except Exception as e:
             raise e
 
-    # Authorize
+    # Authorize token
     def authorize(self, event, context):
         try:
             return _authorize_response(event, context)
         except Exception as e:
             raise e
 
-    # Authorize
+    # Authorize user permissions
     def verify_permission(self, event, context):
         try:
             return _verify_permission(event, context)
+        except Exception as e:
+            raise e
+
+    # Get roles
+    def get_roles_by_cognito_user_sub(self, cognito_user_sub, group_id=None):
+        try:
+            return _get_roles_by_cognito_user_sub(cognito_user_sub, group_id)
+        except Exception as e:
+            raise e
+
+    # Get users
+    def get_users_by_role_type(self, type, group_id=None):
+        try:
+            return _get_users_by_role_type(type, group_id)
         except Exception as e:
             raise e

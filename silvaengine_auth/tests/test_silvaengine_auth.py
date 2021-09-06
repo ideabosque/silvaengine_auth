@@ -129,7 +129,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_get_users_graphql(self):
         query = """
             query users(
@@ -727,6 +727,18 @@ class SilvaEngineAuthTest(unittest.TestCase):
             },
         }
         response = self.auth.verify_permission(request, None)
+        print("Response:", response)
+
+    # @unittest.skip("demonstrating skipping")
+    def test_get_roles(self):
+        response = self.auth.get_roles_by_cognito_user_sub(
+            "f2b3a074-eb9e-4210-81b2-cbe617ecc50b"
+        )
+        print("Response:", response)
+
+    @unittest.skip("demonstrating skipping")
+    def test_get_users(self):
+        response = self.auth.get_users_by_role_type(type=1, group_id=357)
         print("Response:", response)
 
 

@@ -780,6 +780,91 @@ def convert_permisson_as_dict(permissions):
     return permission_map
 
 
+# Obtain user roles according to the specified user ID
+def _get_roles_by_cognito_user_sub(cognito_user_sub, group_id=None):
+    if not cognito_user_sub or str(cognito_user_sub).strip() == "":
+        return []
+
+    arguments = {
+        "limit": None,
+        "filter_condition": (
+            RelationshipModel.user_id == str(cognito_user_sub).strip()
+        ),
+    }
+
+    if group_id and str(group_id).strip() != "":
+        arguments["filter_condition"] = arguments["filter_condition"] & (
+            RelationshipModel.group_id == str(group_id).strip()
+        )
+
+    role_ids = [
+        relationship.role_id for relationship in RelationshipModel.scan(**arguments)
+    ]
+
+    if len(role_ids):
+        return [
+            Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
+            for role in RoleModel.scan(RoleModel.role_id.is_in(*role_ids))
+        ]
+
+    return []
+
+
+# Obtain user roles according to the specified user ID
+def _get_users_by_role_type(role_type, group_id=None):
+    if type(role_type) is not int:
+        return []
+    filter_condition = (
+        (RoleModel.is_admin == True)
+        & (RoleModel.status == True)
+        & (RoleModel.type == role_type)
+    )
+    roles_result_iterator = RoleModel.scan(filter_condition=filter_condition)
+    roles = []
+
+    for role in roles_result_iterator:
+        item = Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
+        filter_condition = RelationshipModel.role_id == role.role_id
+
+        if group_id and str(group_id).strip() != "":
+            filter_condition = filter_condition & (
+                RelationshipModel.group_id == str(group_id).strip()
+            )
+
+        relationships = [
+            Utility.json_loads(Utility.json_dumps(user.__dict__["attribute_values"]))
+            for user in RelationshipModel.scan(filter_condition=filter_condition)
+        ]
+
+        if len(relationships):
+            cognito_user_subs = [
+                relationship.get("user_id") for relationship in relationships
+            ]
+
+            if len(cognito_user_subs):
+                users = Utility.import_dynamically(
+                    "relation_engine",
+                    "get_users_by_cognito_user_id",
+                    "RelationEngine",
+                    {"logger": None},
+                )(cognito_user_subs)
+
+            for index, relationship in enumerate(relationships):
+                if relationship.get("user_id") and users.get(relationship.get("user_id")):
+                    relationships[index].update({"user_base_info": users.get(relationship.get("user_id"))})
+
+
+            # for index, user in enumerate(users):
+            #     if user.get("user_id"):
+            #         print(fn(user.get("user_id")))
+            #         users[index].update(fn(user.get("user_id")))
+
+            item.update({"users": relationships})
+            roles.append(item)
+
+    return roles
+
+
 def add_resource():
     with open("f:\install.log", "a") as fd:
         print("mtest")

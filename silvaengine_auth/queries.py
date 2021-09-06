@@ -170,7 +170,6 @@ def _resolve_users(info, **kwargs):
             filter_condition=arguments.get("filter_condition")
         ):
             total += 1
-
         # Pagination.
         if arguments.get("limit") > 0 and kwargs.get("page_number", 0) > 1:
             pagination_arguments = {
