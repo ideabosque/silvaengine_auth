@@ -811,13 +811,17 @@ def _get_roles_by_cognito_user_sub(cognito_user_sub, group_id=None):
 
 
 # Obtain user roles according to the specified user ID
-def _get_users_by_role_type(role_type, group_id=None):
-    if type(role_type) is not int:
+def _get_users_by_role_type(role_types, group_ids=None):
+    if type(role_types) is not list and len(role_types):
         return []
+
+    if type(group_ids) is list and len(group_ids):
+        group_ids = list(set([str(group_id).strip() for group_id in group_ids]))
+
     filter_condition = (
         (RoleModel.is_admin == True)
         & (RoleModel.status == True)
-        & (RoleModel.type == role_type)
+        & (RoleModel.type.is_in(*list(set(role_types))))
     )
     roles_result_iterator = RoleModel.scan(filter_condition=filter_condition)
     roles = []
@@ -826,9 +830,9 @@ def _get_users_by_role_type(role_type, group_id=None):
         item = Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
         filter_condition = RelationshipModel.role_id == role.role_id
 
-        if group_id and str(group_id).strip() != "":
-            filter_condition = filter_condition & (
-                RelationshipModel.group_id == str(group_id).strip()
+        if type(group_ids) is list and len(group_ids):
+            filter_condition = (filter_condition) & (
+                RelationshipModel.group_id.is_in(*group_ids)
             )
 
         relationships = [
@@ -840,26 +844,44 @@ def _get_users_by_role_type(role_type, group_id=None):
             cognito_user_subs = [
                 relationship.get("user_id") for relationship in relationships
             ]
+            users = {}
+            response = {}
 
             if len(cognito_user_subs):
-                users = Utility.import_dynamically(
+                method = Utility.import_dynamically(
                     "relation_engine",
                     "get_users_by_cognito_user_id",
                     "RelationEngine",
                     {"logger": None},
-                )(cognito_user_subs)
+                )
 
-            for index, relationship in enumerate(relationships):
-                if relationship.get("user_id") and users.get(relationship.get("user_id")):
-                    relationships[index].update({"user_base_info": users.get(relationship.get("user_id"))})
+                if not callable(method):
+                    raise Exception(
+                        "Module is not exists or the function is uncallable", 500
+                    )
 
+                users = method(cognito_user_subs)
+
+            for relationship in relationships:
+                if relationship.get("user_id") and users.get(
+                    relationship.get("user_id")
+                ):
+                    relationship.update(
+                        {"user_base_info": users.get(relationship.get("user_id"))}
+                    )
+
+                if relationship.get("group_id"):
+                    if not response.get(relationship.get("group_id")):
+                        response.update({relationship.get("group_id"): []})
+
+                    response[relationship.get("group_id")].append(relationship)
 
             # for index, user in enumerate(users):
             #     if user.get("user_id"):
             #         print(fn(user.get("user_id")))
             #         users[index].update(fn(user.get("user_id")))
 
-            item.update({"users": relationships})
+            item.update({"groups": response})
             roles.append(item)
 
     return roles
