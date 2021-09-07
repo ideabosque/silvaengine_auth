@@ -738,7 +738,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
     # @unittest.skip("demonstrating skipping")
     def test_get_users(self):
-        response = self.auth.get_users_by_role_type(type=[1, 2], group_id=[357])
+        response = self.auth.get_users_by_role_type(type=["1", 2], group_id=[357])
         print("Response:", response)
 
 

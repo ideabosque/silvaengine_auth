@@ -815,13 +815,15 @@ def _get_users_by_role_type(role_types, group_ids=None):
     if type(role_types) is not list and len(role_types):
         return []
 
+    role_types = list(set([int(role_type) for role_type in role_types]))
+
     if type(group_ids) is list and len(group_ids):
         group_ids = list(set([str(group_id).strip() for group_id in group_ids]))
 
     filter_condition = (
         (RoleModel.is_admin == True)
         & (RoleModel.status == True)
-        & (RoleModel.type.is_in(*list(set(role_types))))
+        & (RoleModel.type.is_in(*role_types))
     )
     roles_result_iterator = RoleModel.scan(filter_condition=filter_condition)
     roles = []
