@@ -10,6 +10,8 @@ from importlib.util import find_spec
 from importlib import import_module
 from silvaengine_utility import Utility, Graphql, Authorizer
 from silvaengine_resource import ResourceModel
+from pynamodb.transactions import TransactWrite
+from pynamodb.connection import Connection
 from .utils import validate_required, get_seller_id, is_admin_user
 from .models import ConnectionModel, RelationshipModel, RoleModel, ConfigDataModel
 import uuid, json, time, urllib.request, os
@@ -102,6 +104,7 @@ def _create_relationship_handler(info, kwargs):
         RelationshipModel(
             relationship_id,
             **{
+                "type": kwargs.get("relationship_type"),
                 "user_id": kwargs.get("user_id"),
                 "role_id": kwargs.get("role_id"),
                 "group_id": kwargs.get("group_id"),
@@ -124,21 +127,24 @@ def _update_relationship_handler(info, kwargs):
         actions = [
             RelationshipModel.updated_at.set(datetime.utcnow()),
         ]
-        fields = [
-            "user_id",
-            "role_id",
-            "group_id",
-            "is_admin",
-            "updated_by",
-            "status",
-        ]
+        fields = {
+            "relationship_type": "type",
+            "user_id": "user_id",
+            "role_id": "role_id",
+            "group_id": "group_id",
+            "is_admin": "is_admin",
+            "updated_by": "updated_by",
+            "status": "status",
+        }
         need_update = False
 
-        for field in fields:
-            if kwargs.get(field) is not None:
+        for argument, field in fields.items():
+            if kwargs.get(argument) is not None:
                 need_update = True
 
-                actions.append(getattr(RelationshipModel, field).set(kwargs.get(field)))
+                actions.append(
+                    getattr(RelationshipModel, field).set(kwargs.get(argument))
+                )
 
         if need_update:
             condition = RelationshipModel.relationship_id == kwargs.get(
@@ -162,6 +168,90 @@ def _delete_relationship_handler(info, relationship_id):
 
         # Delete the group/user/role relationship.
         return RelationshipModel(relationship_id).delete()
+    except Exception as e:
+        raise e
+
+
+# Bulk save relationships
+def _save_relationships_handler(info, relationships):
+    try:
+        if (
+            relationships is None
+            or type(relationships) is not list
+            or len(relationships) < 1
+        ):
+            raise Exception("`relationships` is required", 400)
+
+        now = datetime.utcnow()
+
+        for relationship in relationships:
+            filter_conditions = (
+                (RelationshipModel.type == int(relationship.get("type", 0)))
+                & (RelationshipModel.user_id == relationship.get("user_id"))
+                & (RelationshipModel.role_id == relationship.get("role_id"))
+                & (RelationshipModel.group_id == relationship.get("group_id"))
+            )
+            item_ids = list(
+                set(
+                    [
+                        item.relationship_id
+                        for item in RelationshipModel.scan(
+                            filter_condition=filter_conditions
+                        )
+                    ]
+                )
+            )
+
+            if len(item_ids):
+                actions = [
+                    RelationshipModel.updated_at.set(now),
+                ]
+                fields = {
+                    "type": "type",
+                    "user_id": "user_id",
+                    "role_id": "role_id",
+                    "group_id": "group_id",
+                    "is_admin": "is_admin",
+                    "updated_by": "updated_by",
+                    "status": "status",
+                }
+                need_update = False
+
+                for argument, field in fields.items():
+                    if relationship.get(argument) is not None:
+                        need_update = True
+
+                        actions.append(
+                            getattr(RelationshipModel, field).set(
+                                relationship.get(argument)
+                            )
+                        )
+
+                if need_update:
+                    condition = RelationshipModel.relationship_id.is_in(*item_ids)
+
+                    relationship.update(
+                        actions=actions,
+                        condition=condition,
+                    )
+
+            else:
+                relationship_id = str(uuid.uuid1())
+
+                RelationshipModel(
+                    relationship_id,
+                    **{
+                        "type": relationship.get("type", 0),
+                        "user_id": relationship.get("user_id"),
+                        "role_id": relationship.get("role_id"),
+                        "group_id": relationship.get("group_id"),
+                        "created_at": now,
+                        "updated_at": now,
+                        "updated_by": relationship.get("updated_by"),
+                        "status": bool(relationship.get("status", True)),
+                    },
+                ).save()
+
     except Exception as e:
         raise e
 
@@ -811,7 +901,8 @@ def _get_roles_by_cognito_user_sub(cognito_user_sub, group_id=None):
 
 
 # Obtain user roles according to the specified user ID
-def _get_users_by_role_type(role_types, group_ids=None):
+# relationship_type: 0 - team, 1 - seller
+def _get_users_by_role_type(role_types, relationship_type=0, group_ids=None):
     if type(role_types) is not list and len(role_types):
         return []
 
@@ -830,7 +921,9 @@ def _get_users_by_role_type(role_types, group_ids=None):
 
     for role in roles_result_iterator:
         item = Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
-        filter_condition = RelationshipModel.role_id == role.role_id
+        filter_condition = (RelationshipModel.role_id == role.role_id) & (
+            RelationshipModel.type == int(relationship_type)
+        )
 
         if item.get("permissions"):
             del item["permissions"]

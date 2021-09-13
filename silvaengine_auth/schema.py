@@ -4,13 +4,19 @@ from __future__ import print_function
 from graphene import ObjectType, String, Int, Schema, Field, Boolean, List
 from silvaengine_utility import JSON
 from .types import (
+    RelationshipInputType,
     RoleType,
     RolesType,
     CertificateType,
     RelationshipsType,
     UserRelationshipsType,
 )
-from .queries import _resolve_roles, _resolve_role, _resolve_certificate, _resolve_users
+from .queries import (
+    _resolve_roles,
+    _resolve_role,
+    _resolve_certificate,
+    _resolve_users,
+)
 from .mutations import (
     CreateRole,
     UpdateRole,
@@ -18,13 +24,19 @@ from .mutations import (
     CreateRelationship,
     UpdateRelationship,
     DeleteRelationship,
+    SaveRelationships,
 )
 
 __author__ = "bl"
 
 
 def role_type_class():
-    return [RolesType, RoleType, RelationshipsType, UserRelationshipsType]
+    return [
+        RolesType,
+        RoleType,
+        RelationshipsType,
+        UserRelationshipsType,
+    ]
 
 
 def certificate_type_class():
@@ -69,6 +81,9 @@ class RoleQuery(ObjectType):
         page_number=Int(),
         status=Boolean(),
         role_id=String(),
+        role_name=String(),
+        is_admin=Boolean(),
+        role_type=Int(),
         group_id=String(),
         # last_evaluated_key=JSON(),
     )
@@ -91,6 +106,7 @@ class RoleMutations(ObjectType):
     create_relationship = CreateRelationship.Field()
     update_relationship = UpdateRelationship.Field()
     delete_relationship = DeleteRelationship.Field()
+    save_relationships = SaveRelationships.Field()
 
 
 # Generate API documents.

@@ -67,6 +67,7 @@ class RolesType(ObjectType):
 
 class RelationshipType(ObjectType):
     relationship_id = String()
+    type = Int()
     group_id = String()
     user_id = String()
     role_id = String()
@@ -86,6 +87,17 @@ class UserRelationshipType(ObjectType):
     updated_at = DateTime()
     updated_by = String()
     status = Boolean()
+
+
+class SimilarUserType(RoleType):
+    users = List(JSON)
+
+
+class SimilarUsersType(ObjectType):
+    items = List(SimilarUserType)
+    page_size = Int()
+    page_number = Int()
+    total = Int()
 
 
 class RelationshipsType(ObjectType):
@@ -112,3 +124,12 @@ class CertificateType(ObjectType):
     token_type = String()
     permissions = JSON()
     context = JSON()
+
+
+class RelationshipInputType(InputObjectType):
+    type = Int()
+    group_id = String()
+    user_id = String()
+    role_id = String()
+    updated_by = String()
+    status = Boolean()

@@ -12,6 +12,8 @@ from .types import (
     CertificateType,
     UserRelationshipType,
     UserRelationshipsType,
+    SimilarUserType,
+    SimilarUsersType,
 )
 from .models import RelationshipModel, RoleModel
 from .handlers import _get_user_permissions
@@ -140,27 +142,72 @@ def _resolve_users(info, **kwargs):
         total = 0
         # Build filter conditions.
         # @SEE: {"ARGUMENT_NAME": "FIELD_NAME_OF_DATABASE_TABLE", ...}
-        mappings = {
-            "role_id": "role_id",
-            "group_id": "group_id",
-            "status": "status",
+        # Role model
+        role_field_argument_mappings = {
+            "role_name": "name",
+            "is_admin_role": "is_admin",
+            "role_type": "type",
         }
-        filter_conditions = []
+        role_filter_conditions = []
+        roles = None
+        relatinship_filter_conditions = []
 
         # Get filter condition from arguments
-        for argument, field in mappings.items():
+        for argument, field in role_field_argument_mappings.items():
             if kwargs.get(argument) is None or not hasattr(RelationshipModel, field):
                 continue
 
-            filter_conditions.append(
+            role_filter_conditions.append(
                 (getattr(RelationshipModel, field) == kwargs.get(argument))
             )
 
         # Join the filter conditions
-        if len(filter_conditions):
-            arguments["filter_condition"] = filter_conditions.pop(0)
+        if len(role_filter_conditions):
+            filter_condition = role_filter_conditions.pop(0)
 
-            for condition in filter_conditions:
+            for condition in role_filter_conditions:
+                filter_condition = filter_condition & condition
+
+            # roles = {
+            #     role.role_id: role
+            #     for role in RoleModel.scan(filter_condition=filter_condition)
+            # }
+            roles = {
+                role.role_id: SimilarUserType(
+                    **Utility.json_loads(
+                        Utility.json_dumps(dict(**role.__dict__["attribute_values"]))
+                    )
+                )
+                for role in RoleModel.scan(filter_condition=filter_condition)
+            }
+
+            if kwargs.get("role_id") and roles.get(kwargs.get("role_id")) is None:
+                return None
+
+            relatinship_filter_conditions.append(
+                (RelationshipModel.role_id.is_in(*roles.keys()))
+            )
+
+        # Relationship model
+        relationship_field_argument_mappings = {
+            "group_id": "group_id",
+            "status": "status",
+        }
+
+        # Get filter condition from arguments
+        for argument, field in relationship_field_argument_mappings.items():
+            if kwargs.get(argument) is None or not hasattr(RelationshipModel, field):
+                continue
+
+            relatinship_filter_conditions.append(
+                (getattr(RelationshipModel, field) == kwargs.get(argument))
+            )
+
+        # Join the filter conditions
+        if len(relatinship_filter_conditions):
+            arguments["filter_condition"] = relatinship_filter_conditions.pop(0)
+
+            for condition in relatinship_filter_conditions:
                 arguments["filter_condition"] = (
                     arguments.get("filter_condition") & condition
                 )
@@ -232,19 +279,26 @@ def _resolve_users(info, **kwargs):
                 users = Utility.import_dynamically(
                     module_name, function_name, class_name, {"logger": logger}
                 )([relationship.user_id for relationship in relationships])
-                items = []
+                # items = []
 
                 if len(users):
                     for relationship in relationships:
-                        if relationship.user_id and users.get(relationship.user_id):
-                            relationship.user = users.get(relationship.user_id)
+                        if (
+                            relationship.role_id
+                            and roles.get(str(relationship.role_id).strip())
+                            and relationship.user_id
+                            and users.get(str(relationship.user_id).strip())
+                        ):
+                            roles[str(relationship.role_id).strip()].users.append(
+                                users.get(str(relationship.user_id).strip())
+                            )
 
-                        items.append(relationship)
+                        # items.append(relationship)
 
-                relationships = items
+                # relationships = items
 
-        return UserRelationshipsType(
-            items=relationships,
+        return SimilarUsersType(
+            items=roles.values(),
             page_number=kwargs.get("page_number", 1),
             page_size=arguments.get("limit"),
             total=total,

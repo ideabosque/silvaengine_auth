@@ -7,6 +7,7 @@ from .types import (
     RoleType,
     RelationshipType,
     PermissionInputType,
+    RelationshipInputType,
 )
 from .handlers import (
     _create_role_handler,
@@ -15,6 +16,7 @@ from .handlers import (
     _create_relationship_handler,
     _update_relationship_handler,
     _delete_relationship_handler,
+    _save_relationships_handler,
 )
 import traceback
 
@@ -100,6 +102,7 @@ class CreateRelationship(Mutation):
 
     class Arguments:
         group_id = String()
+        relationship_type = Int(required=True)
         user_id = String(required=True)
         role_id = String(required=True)
         updated_by = String()
@@ -127,6 +130,7 @@ class UpdateRelationship(Mutation):
 
     class Arguments:
         relationship_id = String(required=True)
+        relationship_type = Int()
         group_id = String()
         user_id = String()
         role_id = String()
@@ -161,6 +165,23 @@ class DeleteRelationship(Mutation):
         try:
             _delete_relationship_handler(info, kwargs.get("relationship_id"))
             return DeleteRelationship(ok=True)
+        except Exception as e:
+            info.context.get("logger").exception(traceback.format_exc())
+            raise e
+
+
+# Bulk save relationships
+class SaveRelationships(Mutation):
+    ok = Boolean()
+
+    class Arguments:
+        relationships = List(RelationshipInputType, required=True)
+
+    @staticmethod
+    def mutate(root, info, **kwargs):
+        try:
+            _save_relationships_handler(info, kwargs.get("relationships"))
+            return SaveRelationships(ok=True)
         except Exception as e:
             info.context.get("logger").exception(traceback.format_exc())
             raise e

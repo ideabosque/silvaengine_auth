@@ -417,6 +417,43 @@ class SilvaEngineAuthTest(unittest.TestCase):
         logger.info(response)
 
     @unittest.skip("demonstrating skipping")
+    def test_save_relationships(self):
+        mutation = """
+            mutation saveRelationships(
+                    $relationships: [RelationshipInputType]!
+                ) {
+                saveRelationships(
+                    relationships: $relationships,
+                ) {
+                    ok
+                }
+            }
+        """
+        variables = {
+            "relationships": [
+                {
+                    "type": 0,
+                    "groupId": "357",
+                    "userId": "076de22a-6eed-4836-b4bb-ec06f1274311",
+                    "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+                    "updatedBy": "setup",
+                    "status": True,
+                },
+                {
+                    "type": 1,
+                    "groupId": "2018",
+                    "userId": "076de22a-6eed-4836-b4bb-ec06f1274311",
+                    "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+                    "updatedBy": "setup",
+                    "status": True,
+                },
+            ]
+        }
+        payload = {"mutation": mutation, "variables": variables}
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    @unittest.skip("demonstrating skipping")
     def test_certificate(self):
         query = """
             query certificate(
@@ -738,7 +775,9 @@ class SilvaEngineAuthTest(unittest.TestCase):
 
     # @unittest.skip("demonstrating skipping")
     def test_get_users(self):
-        response = self.auth.get_users_by_role_type(type=["1", 2], group_id=[357])
+        response = self.auth.get_users_by_role_type(
+            role_types=["1", 2], relationship_type=1, ids=[2018]
+        )
         print("Response:", response)
 
 

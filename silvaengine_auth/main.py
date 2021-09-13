@@ -44,6 +44,10 @@ def deploy() -> list:
                             "action": "updateRelationship",
                             "label": "Update relationship",
                         },
+                        {
+                            "action": "saveRelationships",
+                            "label": "Bulk save relationships",
+                        },
                     ],
                     "delete": [
                         {"action": "deleteRole", "label": "Delete Role"},
@@ -136,6 +140,7 @@ class Auth(object):
                 }
             )
         except Exception as e:
+            print(e)
             raise e
 
     # Role interface by graphql
@@ -195,8 +200,8 @@ class Auth(object):
             raise e
 
     # Get users
-    def get_users_by_role_type(self, type, group_id=None):
+    def get_users_by_role_type(self, role_types, relationship_type=0, ids=None):
         try:
-            return _get_users_by_role_type(type, group_id)
+            return _get_users_by_role_type(role_types, relationship_type, ids)
         except Exception as e:
             raise e
