@@ -129,30 +129,38 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_get_users_graphql(self):
         query = """
             query users(
                     $pageSize: Int
                     $pageNumber: Int
                     $roleId: String
-                    $groupId: String
-                    $status: Boolean
+                    $roleName: String
+                    $roleType: Int
+                    $roleStatus: Boolean
+                    $isAdminRole: Boolean
+                    $ownerId: String
+                    $relationshipType: Int
+                    $relationshipStatus: Boolean
                 ){
                 users(
                     pageSize: $pageSize
                     pageNumber: $pageNumber
                     roleId: $roleId
-                    groupId: $groupId
-                    status: $status
+                    roleName: $roleName
+                    roleType: $roleType
+                    roleStatus: $roleStatus
+                    isAdminRole: $isAdminRole
+                    ownerId: $ownerId
+                    relationshipType: $relationshipType
+                    relationshipStatus: $relationshipStatus
                 ){
                     items {
-                        relationshipId
-                        groupId
-                        roleId
-                        userId
+                        name
+                        type
                         status
-                        user
+                        users
                     }
                     pageSize
                     pageNumber
@@ -161,11 +169,16 @@ class SilvaEngineAuthTest(unittest.TestCase):
             }
         """
         variables = {
-            # "groupId": "357",
-            "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
-            # "status": True,
-            # "pageSize": 20,
-            # "pageNumber": 1,
+            "pageSize": 10,
+            "pageNumber": 1,
+            # "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
+            "roleName": "GWI QC Manager",
+            "roleType": 2,
+            "roleStatus": True,
+            "isAdminRole": True,
+            # "ownerId": "2018",
+            # "relationshipType": 1,
+            # "relationshipStatus": True,
         }
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
@@ -432,10 +445,10 @@ class SilvaEngineAuthTest(unittest.TestCase):
         variables = {
             "relationships": [
                 {
-                    "type": 0,
-                    "groupId": "357",
+                    "type": 1,
+                    "groupId": "2018",
                     "userId": "076de22a-6eed-4836-b4bb-ec06f1274311",
-                    "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+                    "roleId": "b874bcee-0af8-11ec-acc5-5d5264ad5593",
                     "updatedBy": "setup",
                     "status": True,
                 },
@@ -443,7 +456,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                     "type": 1,
                     "groupId": "2018",
                     "userId": "076de22a-6eed-4836-b4bb-ec06f1274311",
-                    "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+                    "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
                     "updatedBy": "setup",
                     "status": True,
                 },
@@ -773,10 +786,10 @@ class SilvaEngineAuthTest(unittest.TestCase):
         )
         print("Response:", response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_get_users(self):
         response = self.auth.get_users_by_role_type(
-            role_types=["1", 2], relationship_type=1, ids=[2018]
+            role_types=[2], relationship_type=1, ids=[2018]
         )
         print("Response:", response)
 

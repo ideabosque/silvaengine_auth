@@ -10,6 +10,7 @@ from .types import (
     CertificateType,
     RelationshipsType,
     UserRelationshipsType,
+    SimilarUsersType,
 )
 from .queries import (
     _resolve_roles,
@@ -76,16 +77,17 @@ class RoleQuery(ObjectType):
     )
 
     users = Field(
-        UserRelationshipsType,
+        SimilarUsersType,
         page_size=Int(),
         page_number=Int(),
-        status=Boolean(),
         role_id=String(),
         role_name=String(),
-        is_admin=Boolean(),
         role_type=Int(),
-        group_id=String(),
-        # last_evaluated_key=JSON(),
+        role_status=Boolean(),
+        is_admin_role=Boolean(),
+        owner_id=String(),
+        relationship_type=Int(),
+        relationship_status=Boolean(),
     )
 
     def resolve_roles(self, info, **kwargs):

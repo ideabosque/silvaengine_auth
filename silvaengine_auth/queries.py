@@ -145,53 +145,78 @@ def _resolve_users(info, **kwargs):
         # Role model
         role_field_argument_mappings = {
             "role_name": "name",
-            "is_admin_role": "is_admin",
             "role_type": "type",
+            "role_id": "role_id",
+            "role_status": "status",
+            "is_admin_role": "is_admin",
         }
         role_filter_conditions = []
-        roles = None
-        relatinship_filter_conditions = []
 
-        # Get filter condition from arguments
+        # Get filter condition from arguments for Roles
         for argument, field in role_field_argument_mappings.items():
-            if kwargs.get(argument) is None or not hasattr(RelationshipModel, field):
+            if kwargs.get(argument) is None or not hasattr(RoleModel, field):
                 continue
 
             role_filter_conditions.append(
-                (getattr(RelationshipModel, field) == kwargs.get(argument))
+                (getattr(RoleModel, field) == kwargs.get(argument))
             )
 
         # Join the filter conditions
         if len(role_filter_conditions):
-            filter_condition = role_filter_conditions.pop(0)
+            arguments["filter_condition"] = role_filter_conditions.pop(0)
 
             for condition in role_filter_conditions:
-                filter_condition = filter_condition & condition
+                arguments["filter_condition"] = (
+                    arguments["filter_condition"] & condition
+                )
 
-            # roles = {
-            #     role.role_id: role
-            #     for role in RoleModel.scan(filter_condition=filter_condition)
-            # }
-            roles = {
-                role.role_id: SimilarUserType(
+        # Pagination.
+        if arguments.get("limit") > 0 and kwargs.get("page_number", 0) > 1:
+            pagination_arguments = {
+                "limit": (int(kwargs.get("page_number", 0)) - 1)
+                * arguments.get("limit"),
+                "last_evaluated_key": None,
+                "filter_condition": arguments["filter_condition"],
+            }
+
+            # Skip (int(kwargs.get("page_number", 0)) - 1) rows
+            pagination_results = RoleModel.scan(**pagination_arguments)
+            # Discard the results of the iteration, and extract the cursor of the page offset from the iterator.
+            _ = [role for role in pagination_results]
+            arguments["last_evaluated_key"] = pagination_results.last_evaluated_key
+
+            if (
+                arguments.get("last_evaluated_key") is None
+                or pagination_results.total_count == total
+            ):
+                return None
+
+        # Count total of roles
+        roles = {}
+
+        for role in RoleModel.scan(**arguments):
+            if role:
+                roles[role.role_id] = SimilarUserType(
+                    users=[],
                     **Utility.json_loads(
                         Utility.json_dumps(dict(**role.__dict__["attribute_values"]))
                     )
                 )
-                for role in RoleModel.scan(filter_condition=filter_condition)
-            }
+                total += 1
 
-            if kwargs.get("role_id") and roles.get(kwargs.get("role_id")) is None:
-                return None
+        if (
+            kwargs.get("role_id") and roles.get(kwargs.get("role_id")) is None
+        ) or total == 0:
+            return None
 
-            relatinship_filter_conditions.append(
-                (RelationshipModel.role_id.is_in(*roles.keys()))
-            )
-
+        relatinship_filter_conditions = [
+            (RelationshipModel.role_id.is_in(*roles.keys()))
+        ]
         # Relationship model
         relationship_field_argument_mappings = {
-            "group_id": "group_id",
-            "status": "status",
+            "relationship_status": "status",
+            "relationship_type": "type",
+            "owner_id": "group_id",
         }
 
         # Get filter condition from arguments
@@ -204,42 +229,16 @@ def _resolve_users(info, **kwargs):
             )
 
         # Join the filter conditions
+        filter_condition = None
+
         if len(relatinship_filter_conditions):
-            arguments["filter_condition"] = relatinship_filter_conditions.pop(0)
+            filter_condition = relatinship_filter_conditions.pop(0)
 
             for condition in relatinship_filter_conditions:
-                arguments["filter_condition"] = (
-                    arguments.get("filter_condition") & condition
-                )
-
-        # Count total of roles
-        for _ in RelationshipModel.scan(
-            filter_condition=arguments.get("filter_condition")
-        ):
-            total += 1
-        # Pagination.
-        if arguments.get("limit") > 0 and kwargs.get("page_number", 0) > 1:
-            pagination_arguments = {
-                "limit": (int(kwargs.get("page_number", 0)) - 1)
-                * arguments.get("limit"),
-                "last_evaluated_key": None,
-                "filter_condition": arguments.get("filter_condition"),
-            }
-
-            # Skip (int(kwargs.get("page_number", 0)) - 1) rows
-            pagination_results = RelationshipModel.scan(**pagination_arguments)
-            # Discard the results of the iteration, and extract the cursor of the page offset from the iterator.
-            _ = [role for role in pagination_results]
-            arguments["last_evaluated_key"] = pagination_results.last_evaluated_key
-
-            if (
-                arguments.get("last_evaluated_key") is None
-                or pagination_results.total_count == total
-            ):
-                return None
+                filter_condition = filter_condition & condition
 
         # Query data from the database.
-        results = RelationshipModel.scan(**arguments)
+        results = RelationshipModel.scan(filter_condition=filter_condition)
         relationships = [
             UserRelationshipType(
                 **Utility.json_loads(

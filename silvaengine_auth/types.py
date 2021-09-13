@@ -46,6 +46,7 @@ class PermissionInputType(InputObjectType):
 
 class RoleType(ObjectType):
     role_id = String()
+    # type: 0 - Normal, 1 - GWI Accoumnt Manger, 2 - GWI QC Manager
     type = Int()
     name = String()
     description = String()
@@ -67,6 +68,7 @@ class RolesType(ObjectType):
 
 class RelationshipType(ObjectType):
     relationship_id = String()
+    # type: 0 - amdin, 1 - Seller, 2 - team
     type = Int()
     group_id = String()
     user_id = String()
@@ -81,6 +83,8 @@ class UserRelationshipType(ObjectType):
     relationship_id = String()
     group_id = String()
     user_id = String()
+    # type: 0 - amdin, 1 - Seller, 2 - team
+    type = Int()
     user = JSON()
     role_id = String()
     created_at = DateTime()
@@ -127,6 +131,7 @@ class CertificateType(ObjectType):
 
 
 class RelationshipInputType(InputObjectType):
+    # type: 0 - amdin, 1 - Seller, 2 - team
     type = Int()
     group_id = String()
     user_id = String()

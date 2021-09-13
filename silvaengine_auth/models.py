@@ -87,7 +87,7 @@ class RelationshipModel(TraitModel):
         table_name = "se-relationships"
 
     relationship_id = UnicodeAttribute(hash_key=True)
-    # 0 - Team, 1 - Seller
+    # type: 0 - amdin, 1 - Seller, 2 - team
     type = NumberAttribute(default=0)
     user_id = UnicodeAttribute()
     role_id = UnicodeAttribute()
