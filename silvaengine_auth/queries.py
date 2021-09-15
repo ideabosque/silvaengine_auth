@@ -168,7 +168,7 @@ def _resolve_users(info, **kwargs):
             if (
                 not hasattr(RoleModel, field)
                 or type(kwargs.get(argument)) is not list
-                or len(kwargs.get(argument))
+                or len(kwargs.get(argument, [])) < 1
             ):
                 continue
 
@@ -250,7 +250,7 @@ def _resolve_users(info, **kwargs):
             if (
                 not hasattr(RelationshipModel, field)
                 or type(kwargs.get(argument)) is not list
-                or len(kwargs.get(argument))
+                or len(kwargs.get(argument), []) < 1
             ):
                 continue
 
