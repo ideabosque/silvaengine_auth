@@ -143,22 +143,37 @@ def _resolve_users(info, **kwargs):
         # Build filter conditions.
         # @SEE: {"ARGUMENT_NAME": "FIELD_NAME_OF_DATABASE_TABLE", ...}
         # Role model
-        role_field_argument_mappings = {
-            "role_name": "name",
-            "role_type": "type",
-            "role_id": "role_id",
+        role_field_argument_mappings_eq = {
             "role_status": "status",
             "is_admin_role": "is_admin",
         }
+        role_field_argument_mappings_in = {
+            "role_type": "type",
+            "role_name": "name",
+            "role_id": "role_id",
+        }
         role_filter_conditions = []
 
-        # Get filter condition from arguments for Roles
-        for argument, field in role_field_argument_mappings.items():
+        # eq: Get filter condition from arguments for Roles
+        for argument, field in role_field_argument_mappings_eq.items():
             if kwargs.get(argument) is None or not hasattr(RoleModel, field):
                 continue
 
             role_filter_conditions.append(
                 (getattr(RoleModel, field) == kwargs.get(argument))
+            )
+
+        # in: Get filter condition from arguments for Roles
+        for argument, field in role_field_argument_mappings_in.items():
+            if (
+                not hasattr(RoleModel, field)
+                or type(kwargs.get(argument)) is not list
+                or len(kwargs.get(argument))
+            ):
+                continue
+
+            role_filter_conditions.append(
+                (getattr(RoleModel, field).is_in(*kwargs.get(argument)))
             )
 
         # Join the filter conditions
@@ -213,19 +228,34 @@ def _resolve_users(info, **kwargs):
             (RelationshipModel.role_id.is_in(*roles.keys()))
         ]
         # Relationship model
-        relationship_field_argument_mappings = {
+        relationship_field_argument_mappings_eq = {
             "relationship_status": "status",
             "relationship_type": "type",
+        }
+        relationship_field_argument_mappings_in = {
             "owner_id": "group_id",
         }
 
-        # Get filter condition from arguments
-        for argument, field in relationship_field_argument_mappings.items():
+        # eq: Get filter condition from arguments
+        for argument, field in relationship_field_argument_mappings_eq.items():
             if kwargs.get(argument) is None or not hasattr(RelationshipModel, field):
                 continue
 
             relatinship_filter_conditions.append(
                 (getattr(RelationshipModel, field) == kwargs.get(argument))
+            )
+
+        # in: Get filter condition from arguments
+        for argument, field in relationship_field_argument_mappings_in.items():
+            if (
+                not hasattr(RelationshipModel, field)
+                or type(kwargs.get(argument)) is not list
+                or len(kwargs.get(argument))
+            ):
+                continue
+
+            relatinship_filter_conditions.append(
+                (getattr(RelationshipModel, field).is_in(*kwargs.get(argument)))
             )
 
         # Join the filter conditions

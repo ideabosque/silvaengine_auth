@@ -135,12 +135,12 @@ class SilvaEngineAuthTest(unittest.TestCase):
             query users(
                     $pageSize: Int
                     $pageNumber: Int
-                    $roleId: String
-                    $roleName: String
-                    $roleType: Int
+                    $roleId: [String]
+                    $roleName: [String]
+                    $roleType: [Int]
                     $roleStatus: Boolean
                     $isAdminRole: Boolean
-                    $ownerId: String
+                    $ownerId: [String]
                     $relationshipType: Int
                     $relationshipStatus: Boolean
                 ){
@@ -171,12 +171,12 @@ class SilvaEngineAuthTest(unittest.TestCase):
         variables = {
             "pageSize": 10,
             "pageNumber": 1,
-            # "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
-            "roleName": "GWI QC Manager",
-            "roleType": 2,
+            # "roleId": ["cc1d018b-0af8-11ec-bb01-5d5264ad5593"],
+            "roleName": ["GWI QC Manager"],
+            "roleType": [2],
             "roleStatus": True,
             "isAdminRole": True,
-            # "ownerId": "2018",
+            # "ownerId": ["2018"],
             # "relationshipType": 1,
             # "relationshipStatus": True,
         }
@@ -447,7 +447,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                 {
                     "type": 1,
                     "groupId": "2018",
-                    "userId": "076de22a-6eed-4836-b4bb-ec06f1274311",
+                    "userId": "4b84dfaa-565f-4fcf-92bb-2a53042ff278",
                     "roleId": "b874bcee-0af8-11ec-acc5-5d5264ad5593",
                     "updatedBy": "setup",
                     "status": True,
@@ -455,7 +455,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                 {
                     "type": 1,
                     "groupId": "2018",
-                    "userId": "076de22a-6eed-4836-b4bb-ec06f1274311",
+                    "userId": "4b84dfaa-565f-4fcf-92bb-2a53042ff278",
                     "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
                     "updatedBy": "setup",
                     "status": True,
