@@ -193,9 +193,17 @@ class Auth(object):
             raise e
 
     # Get roles
-    def get_roles_by_cognito_user_sub(self, cognito_user_sub, group_id=None):
+    def get_roles_by_cognito_user_sub(
+        self,
+        cognito_user_sub,
+        relationship_type,
+        group_id=None,
+        ignore_permissions=True,
+    ):
         try:
-            return _get_roles_by_cognito_user_sub(cognito_user_sub, group_id)
+            return _get_roles_by_cognito_user_sub(
+                cognito_user_sub, relationship_type, group_id, ignore_permissions
+            )
         except Exception as e:
             raise e
 

@@ -871,15 +871,20 @@ def convert_permisson_as_dict(permissions):
 
 
 # Obtain user roles according to the specified user ID
-def _get_roles_by_cognito_user_sub(cognito_user_sub, group_id=None):
-    if not cognito_user_sub or str(cognito_user_sub).strip() == "":
+def _get_roles_by_cognito_user_sub(
+    cognito_user_sub, relationship_type, group_id=None, ignore_permissions=True
+):
+    if (
+        not cognito_user_sub
+        or str(cognito_user_sub).strip() == ""
+        or relationship_type is None
+    ):
         return []
 
     arguments = {
         "limit": None,
-        "filter_condition": (
-            RelationshipModel.user_id == str(cognito_user_sub).strip()
-        ),
+        "filter_condition": (RelationshipModel.user_id == str(cognito_user_sub).strip())
+        & (RelationshipModel.type == int(relationship_type)),
     }
 
     if group_id and str(group_id).strip() != "":
@@ -887,17 +892,26 @@ def _get_roles_by_cognito_user_sub(cognito_user_sub, group_id=None):
             RelationshipModel.group_id == str(group_id).strip()
         )
 
-    role_ids = [
-        relationship.role_id for relationship in RelationshipModel.scan(**arguments)
-    ]
+    roles = {
+        relationship.role_id: {"group_id": relationship.group_id}
+        for relationship in RelationshipModel.scan(**arguments)
+    }
 
-    if len(role_ids):
-        return [
-            Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
-            for role in RoleModel.scan(RoleModel.role_id.is_in(*role_ids))
-        ]
+    if len(roles.keys()):
+        for role in RoleModel.scan(RoleModel.role_id.is_in(*roles.keys())):
+            role = Utility.json_loads(
+                Utility.json_dumps(role.__dict__["attribute_values"])
+            )
 
-    return []
+            if role.get("permissions") and ignore_permissions:
+                del role["permissions"]
+
+            roles[role.get("role_id")]["role"] = {
+                "name": role.get("name"),
+                "id": role.get("role_id"),
+            }
+
+    return roles.values()
 
 
 # Obtain user roles according to the specified user ID
