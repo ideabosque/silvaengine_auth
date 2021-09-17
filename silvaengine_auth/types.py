@@ -132,9 +132,9 @@ class CertificateType(ObjectType):
 
 class RelationshipInputType(InputObjectType):
     # type: 0 - amdin, 1 - Seller, 2 - team
-    type = Int()
-    group_id = String()
-    user_id = String()
-    role_id = String()
+    type = Int(required=True)
+    group_id = String(required=True)
+    user_id = String(required=True)
+    role_id = String(required=True)
     updated_by = String()
     status = Boolean()

@@ -129,7 +129,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_get_users_graphql(self):
         query = """
             query users(
@@ -786,7 +786,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         )
         print("Response:", response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_get_users(self):
         response = self.auth.get_users_by_role_type(
             role_types=[2], relationship_type=1, ids=[2018]

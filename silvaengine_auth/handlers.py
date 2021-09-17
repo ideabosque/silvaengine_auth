@@ -234,7 +234,6 @@ def _save_relationships_handler(info, relationships):
                         actions=actions,
                         condition=condition,
                     )
-
             else:
                 relationship_id = str(uuid.uuid1())
 
