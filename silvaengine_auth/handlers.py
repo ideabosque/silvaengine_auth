@@ -50,7 +50,7 @@ def _update_role_handler(info, kwargs):
         actions = [
             RoleModel.updated_at.set(datetime.utcnow()),
         ]
-        mappings = {
+        rules = {
             "name": "name",
             "is_admin": "is_admin",
             "role_type": "type",
@@ -60,21 +60,16 @@ def _update_role_handler(info, kwargs):
             "updated_by": "updated_by",
         }
 
-        need_update = False
-
-        for argument, field in mappings.items():
+        for argument, field in rules.items():
             if kwargs.get(argument) is not None:
-                need_update = True
-
                 actions.append(getattr(RoleModel, field).set(kwargs.get(argument)))
 
-        if need_update:
-            condition = RoleModel.role_id == kwargs.get("role_id")
+        condition = RoleModel.role_id == kwargs.get("role_id")
 
-            role.update(
-                actions=actions,
-                condition=condition,
-            )
+        role.update(
+            actions=actions,
+            condition=condition,
+        )
 
         return RoleModel.get(kwargs.get("role_id"), None)
     except Exception as e:
@@ -187,14 +182,23 @@ def _save_relationships_handler(info, relationships):
         for relationship in relationships:
             filter_conditions = (
                 (RelationshipModel.type == int(relationship.get("type", 0)))
-                & (RelationshipModel.user_id == relationship.get("user_id"))
-                & (RelationshipModel.role_id == relationship.get("role_id"))
-                & (RelationshipModel.group_id == relationship.get("group_id"))
+                & (
+                    RelationshipModel.user_id
+                    == str(relationship.get("user_id")).strip()
+                )
+                & (
+                    RelationshipModel.role_id
+                    == str(relationship.get("role_id")).strip()
+                )
+                & (
+                    RelationshipModel.group_id
+                    == str(relationship.get("group_id")).strip()
+                )
             )
-            item_ids = list(
+            relationship_ids = list(
                 set(
                     [
-                        item.relationship_id
+                        str(item.relationship_id).strip()
                         for item in RelationshipModel.scan(
                             filter_condition=filter_conditions
                         )
@@ -202,51 +206,70 @@ def _save_relationships_handler(info, relationships):
                 )
             )
 
-            if len(item_ids):
+            if len(relationship_ids):
                 actions = [
                     RelationshipModel.updated_at.set(now),
+                    RelationshipModel.updated_by.set(
+                        str(
+                            relationship.get(
+                                "updated_by",
+                                info.context.get("authorizer", {}).get(
+                                    "user_id", "setup"
+                                ),
+                            )
+                        ).strip()
+                    ),
                 ]
-                fields = {
-                    "type": "type",
-                    "user_id": "user_id",
-                    "role_id": "role_id",
-                    "group_id": "group_id",
-                    "is_admin": "is_admin",
-                    "updated_by": "updated_by",
-                    "status": "status",
+                rules = {
+                    "type": {"field": "type", "type": "int"},
+                    "user_id": {"field": "user_id", "type": "str"},
+                    "role_id": {"field": "role_id", "type": "str"},
+                    "group_id": {"field": "group_id", "type": "str"},
+                    "status": {"field": "status", "type": "bool"},
                 }
-                need_update = False
 
-                for argument, field in fields.items():
-                    if relationship.get(argument) is not None:
-                        need_update = True
+                for argument, rule in rules.items():
+                    if relationship.get(argument) is not None and hasattr(
+                        RelationshipModel, rule.get("field")
+                    ):
+                        value = relationship.get(argument)
+
+                        if rule.get("type") == "int":
+                            value = int(value)
+                        elif rule.get("type") == "str":
+                            value = str(value).strip()
+                        elif rule.get("type") == "bool":
+                            value = bool(value)
 
                         actions.append(
-                            getattr(RelationshipModel, field).set(
-                                relationship.get(argument)
-                            )
+                            getattr(RelationshipModel, rule.get("field")).set(value)
                         )
 
-                if need_update:
-                    condition = RelationshipModel.relationship_id.is_in(*item_ids)
-
-                    relationship.update(
+                for relationship_id in relationship_ids:
+                    RelationshipModel(relationship_id).update(
                         actions=actions,
-                        condition=condition,
+                        condition=RelationshipModel.relationship_id.is_in(
+                            *relationship_ids
+                        ),
                     )
             else:
-                relationship_id = str(uuid.uuid1())
-
                 RelationshipModel(
-                    relationship_id,
+                    str(uuid.uuid1()),
                     **{
-                        "type": relationship.get("type", 0),
-                        "user_id": relationship.get("user_id"),
-                        "role_id": relationship.get("role_id"),
-                        "group_id": relationship.get("group_id"),
+                        "type": int(relationship.get("type", 0)),
+                        "user_id": str(relationship.get("user_id")).strip(),
+                        "role_id": str(relationship.get("role_id")).strip(),
+                        "group_id": str(relationship.get("group_id")).strip(),
                         "created_at": now,
                         "updated_at": now,
-                        "updated_by": relationship.get("updated_by"),
+                        "updated_by": str(
+                            relationship.get(
+                                "updated_by",
+                                info.context.get("authorizer", {}).get(
+                                    "user_id", "setup"
+                                ),
+                            )
+                        ).strip(),
                         "status": bool(relationship.get("status", True)),
                     },
                 ).save()
