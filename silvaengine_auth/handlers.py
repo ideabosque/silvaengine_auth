@@ -965,9 +965,17 @@ def _get_users_by_role_type(role_types, relationship_type=0, group_ids=None):
             del item["permissions"]
 
         if type(group_ids) is list and len(group_ids):
-            filter_condition = (filter_condition) & (
-                RelationshipModel.group_id.is_in(*group_ids)
-            )
+            if len(group_ids) < 100:
+                filter_condition = (filter_condition) & (
+                    RelationshipModel.group_id.is_in(*group_ids)
+                )
+            else:
+                conditon = RelationshipModel.group_id == group_ids.pop(0)
+
+                for group_id in group_ids:
+                    conditon = (conditon) | (RelationshipModel.group_id == group_id)
+
+                filter_condition = (filter_condition) & (conditon)
 
         relationships = [
             Utility.json_loads(Utility.json_dumps(user.__dict__["attribute_values"]))
