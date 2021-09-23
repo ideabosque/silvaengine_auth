@@ -610,7 +610,7 @@ def _authorize_response(event, context):
             if additional_context.get("is_admin") is None:
                 raise Exception("Missing required item of token", 400)
 
-            if bool(int(additional_context.get("is_admin").strip())) == False:
+            if bool(int(additional_context.get("is_admin", 0).strip())) == False:
                 if (
                     additional_context.get("seller_id") is None
                     or headers.get("seller_id") is None
@@ -629,6 +629,8 @@ def _authorize_response(event, context):
 
                     additional_context.pop("teams")
                     additional_context.update(teams.get(team_id))
+            else:
+                additional_context.update(ctx)
 
         # Append the custom context hooks setting to context
         if settings.get("custom_context_hooks"):
