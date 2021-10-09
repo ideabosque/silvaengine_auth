@@ -1013,12 +1013,6 @@ def _get_roles_by_cognito_user_sub(
                 group_roles[gid] = [rid]
             else:
                 group_roles[gid].append(rid)
-    print("GROUP ROLES:", group_roles)
-    print("ROLE IDS:", role_ids)
-    # roles = {
-    #     relationship.role_id: {"group_id": relationship.group_id}
-    #     for relationship in relationships
-    # }
 
     if len(role_ids):
         roles = {}
@@ -1037,20 +1031,12 @@ def _get_roles_by_cognito_user_sub(
                     "id": role.get("role_id"),
                 }
 
-        print("ROLES:", roles)
-
         for gid, rids in group_roles.items():
-            print("GROUP ID:", gid, "         ROLE IDS:", rids)
             group_roles[gid] = {
                 "group_id": gid,
-                "roles": [roles.get(rid) for rid in rids if roles.get(rid)],
+                "roles": [roles.get(rid) for rid in list(set(rids)) if roles.get(rid)],
             }
-            # for idx, rid in enumerate(rids):
-            #     print("ROLE ID:", rid, "         INDEX:", idx)
-            #     if roles.get(rid):
-            #         group_roles[gid][idx] = roles.get(rid)
 
-    print("GROUP ROLES RESPONSE:", group_roles)
     return group_roles.values()
 
 
