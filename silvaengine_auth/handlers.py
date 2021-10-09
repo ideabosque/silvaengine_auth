@@ -1009,7 +1009,7 @@ def _get_roles_by_cognito_user_sub(
             if not rid in role_ids:
                 role_ids.append(rid)
 
-            if group_roles.get(gid) is None and type(group_roles[gid]) is not list:
+            if group_roles.get(gid) is None or type(group_roles.get(gid)) is not list:
                 group_roles[gid] = [rid]
             else:
                 group_roles[gid].append(rid)
