@@ -96,19 +96,99 @@ def _create_relationship_handler(info, kwargs):
         relationship_id = str(uuid.uuid1())
         now = datetime.utcnow()
 
-        RelationshipModel(
-            relationship_id,
-            **{
-                "type": kwargs.get("relationship_type"),
-                "user_id": kwargs.get("user_id"),
-                "role_id": kwargs.get("role_id"),
-                "group_id": kwargs.get("group_id"),
-                "created_at": now,
-                "updated_at": now,
-                "updated_by": kwargs.get("updated_by"),
-                "status": bool(kwargs.get("status", True)),
-            },
-        ).save()
+        # RelationshipModel(
+        #     relationship_id,
+        #     **{
+        #         "type": kwargs.get("relationship_type"),
+        #         "user_id": kwargs.get("user_id"),
+        #         "role_id": kwargs.get("role_id"),
+        #         "group_id": kwargs.get("group_id"),
+        #         "created_at": now,
+        #         "updated_at": now,
+        #         "updated_by": kwargs.get("updated_by"),
+        #         "status": bool(kwargs.get("status", True)),
+        #     },
+        # ).save()
+        filter_conditions = (
+            (RelationshipModel.type == int(kwargs.get("relationship_type", 0)))
+            & (RelationshipModel.user_id == str(kwargs.get("user_id")).strip())
+            & (RelationshipModel.role_id == str(kwargs.get("role_id")).strip())
+            & (RelationshipModel.group_id == str(kwargs.get("group_id")).strip())
+        )
+        relationship_ids = list(
+            set(
+                [
+                    str(item.relationship_id).strip()
+                    for item in RelationshipModel.scan(
+                        filter_condition=filter_conditions
+                    )
+                ]
+            )
+        )
+
+        if len(relationship_ids):
+            actions = [
+                RelationshipModel.updated_at.set(now),
+                RelationshipModel.updated_by.set(
+                    str(
+                        kwargs.get(
+                            "updated_by",
+                            info.context.get("authorizer", {}).get("user_id", "setup"),
+                        )
+                    ).strip()
+                ),
+            ]
+            rules = {
+                "relationship_type": {"field": "type", "type": "int"},
+                "user_id": {"field": "user_id", "type": "str"},
+                "role_id": {"field": "role_id", "type": "str"},
+                "group_id": {"field": "group_id", "type": "str"},
+                "status": {"field": "status", "type": "bool"},
+            }
+
+            for argument, rule in rules.items():
+                if kwargs.get(argument) is not None and hasattr(
+                    RelationshipModel, rule.get("field")
+                ):
+                    value = kwargs.get(argument)
+
+                    if rule.get("type") == "int":
+                        value = int(value)
+                    elif rule.get("type") == "str":
+                        value = str(value).strip()
+                    elif rule.get("type") == "bool":
+                        value = bool(value)
+
+                    actions.append(
+                        getattr(RelationshipModel, rule.get("field")).set(value)
+                    )
+
+            for id in relationship_ids:
+                RelationshipModel(id).update(
+                    actions=actions,
+                    condition=RelationshipModel.id.is_in(*relationship_ids),
+                )
+
+            relationship_id = relationship_ids[0]
+        else:
+            RelationshipModel(
+                relationship_id,
+                **{
+                    "type": int(kwargs.get("relationship_type", 0)),
+                    "user_id": str(kwargs.get("user_id")).strip(),
+                    "role_id": str(kwargs.get("role_id")).strip(),
+                    "group_id": str(kwargs.get("group_id")).strip(),
+                    "created_at": now,
+                    "updated_at": now,
+                    "updated_by": str(
+                        kwargs.get(
+                            "updated_by",
+                            info.context.get("authorizer", {}).get("user_id", "setup"),
+                        )
+                    ).strip(),
+                    "status": bool(kwargs.get("status", True)),
+                },
+            ).save()
 
         return RelationshipModel.get(relationship_id)
     except Exception as e:
