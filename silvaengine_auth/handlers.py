@@ -1041,14 +1041,17 @@ def _get_roles_by_cognito_user_sub(
 
         for gid, rids in group_roles.items():
             print("GROUP ID:", gid, "         ROLE IDS:", rids)
-            group_roles[gid] = [roles.get(rid) for rid in rids if roles.get(rid)]
+            group_roles[gid] = {
+                "group_id": gid,
+                "roles": [roles.get(rid) for rid in rids if roles.get(rid)],
+            }
             # for idx, rid in enumerate(rids):
             #     print("ROLE ID:", rid, "         INDEX:", idx)
             #     if roles.get(rid):
             #         group_roles[gid][idx] = roles.get(rid)
 
     print("GROUP ROLES RESPONSE:", group_roles)
-    return group_roles
+    return group_roles.values()
 
 
 # Obtain user roles according to the specified user ID
