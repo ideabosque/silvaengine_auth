@@ -998,13 +998,31 @@ def _get_roles_by_cognito_user_sub(
             RelationshipModel.group_id == str(group_id).strip()
         )
 
-    roles = {
-        relationship.role_id: {"group_id": relationship.group_id}
-        for relationship in RelationshipModel.scan(**arguments)
-    }
+    role_ids = []
+    group_roles = {}
 
-    if len(roles.keys()):
-        for role in RoleModel.scan(RoleModel.role_id.is_in(*roles.keys())):
+    for relationship in RelationshipModel.scan(**arguments):
+        if relationship.role_id and relationship.group_id:
+            rid = str(relationship.role_id).strip()
+            gid = str(relationship.group_id).strip()
+
+            if not rid in role_ids:
+                role_ids.append(rid)
+
+            if group_roles.get(gid) is None and type(group_roles[gid]) is not list:
+                group_roles[gid] = [rid]
+            else:
+                group_roles[gid].append(rid)
+
+    # roles = {
+    #     relationship.role_id: {"group_id": relationship.group_id}
+    #     for relationship in relationships
+    # }
+
+    if len(role_ids):
+        roles = {}
+
+        for role in RoleModel.scan(RoleModel.role_id.is_in(*list(set(role_ids)))):
             role = Utility.json_loads(
                 Utility.json_dumps(role.__dict__["attribute_values"])
             )
@@ -1012,12 +1030,18 @@ def _get_roles_by_cognito_user_sub(
             if role.get("permissions") and ignore_permissions:
                 del role["permissions"]
 
-            roles[role.get("role_id")]["role"] = {
-                "name": role.get("name"),
-                "id": role.get("role_id"),
-            }
+            if role.get("role_id") and role.get("name"):
+                roles[role.get("role_id")] = {
+                    "name": role.get("name"),
+                    "id": role.get("role_id"),
+                }
 
-    return roles.values()
+        for gid, rids in enumerate(group_roles):
+            for idx, rid in enumerate(rids):
+                if roles.get(rid):
+                    group_roles[gid][idx] = roles.get(rid)
+
+    return group_roles
 
 
 # Obtain user roles according to the specified user ID
