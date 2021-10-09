@@ -1013,7 +1013,8 @@ def _get_roles_by_cognito_user_sub(
                 group_roles[gid] = [rid]
             else:
                 group_roles[gid].append(rid)
-
+    print("GROUP ROLES:", group_roles)
+    print("ROLE IDS:", role_ids)
     # roles = {
     #     relationship.role_id: {"group_id": relationship.group_id}
     #     for relationship in relationships
@@ -1021,6 +1022,7 @@ def _get_roles_by_cognito_user_sub(
 
     if len(role_ids):
         roles = {}
+        print("ROLES:", roles)
 
         for role in RoleModel.scan(RoleModel.role_id.is_in(*list(set(role_ids)))):
             role = Utility.json_loads(
@@ -1037,10 +1039,13 @@ def _get_roles_by_cognito_user_sub(
                 }
 
         for gid, rids in enumerate(group_roles):
+            print("GROUP ID:", gid, "         ROLE IDS:", rids)
             for idx, rid in enumerate(rids):
+                print("ROLE ID:", rid, "         INDEX:", idx)
                 if roles.get(rid):
                     group_roles[gid][idx] = roles.get(rid)
 
+    print("GROUP ROLES RESPONSE:", group_roles)
     return group_roles
 
 
