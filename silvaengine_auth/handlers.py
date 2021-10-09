@@ -166,7 +166,9 @@ def _create_relationship_handler(info, kwargs):
             for id in relationship_ids:
                 RelationshipModel(id).update(
                     actions=actions,
-                    condition=RelationshipModel.id.is_in(*relationship_ids),
+                    condition=RelationshipModel.relationship_id.is_in(
+                        *relationship_ids
+                    ),
                 )
 
             relationship_id = relationship_ids[0]
