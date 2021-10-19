@@ -171,14 +171,18 @@ class SilvaEngineAuthTest(unittest.TestCase):
         variables = {
             "pageSize": 10,
             "pageNumber": 1,
-            # "roleId": ["cc1d018b-0af8-11ec-bb01-5d5264ad5593"],
-            # "roleName": ["GWI QC Manager"],
-            "roleType": [1, 2],
-            "roleStatus": True,
+            # # "roleId": ["cc1d018b-0af8-11ec-bb01-5d5264ad5593"],
+            # # "roleName": ["GWI QC Manager"],
+            # "roleType": [1, 2],
+            # "roleStatus": True,
+            # "isAdminRole": True,
+            # "ownerId": ["2018"],
+            # "relationshipType": 3,
+            # # "relationshipStatus": True,
             "isAdminRole": True,
-            "ownerId": ["2018"],
+            "roleType": [1, 2, 3],
+            "roleStatus": True,
             "relationshipType": 3,
-            # "relationshipStatus": True,
         }
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)

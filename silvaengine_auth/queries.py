@@ -309,10 +309,12 @@ def _resolve_users(info, **kwargs):
                     module_name, function_name, class_name, {"logger": logger}
                 )
 
-                if not fn:
+                if fn is None:
                     continue
 
-                users = fn([relationship.user_id for relationship in relationships])
+                users = fn(
+                    list(set([relationship.user_id for relationship in relationships]))
+                )
 
                 if len(users):
                     for relationship in relationships:
