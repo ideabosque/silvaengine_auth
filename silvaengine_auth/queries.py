@@ -316,12 +316,26 @@ def _resolve_users(info, **kwargs):
 
                 if len(users):
                     for relationship in relationships:
+                        user_ids = list(
+                            set(
+                                [
+                                    user.cognito_user_sub
+                                    for user in roles[
+                                        str(relationship.role_id).strip()
+                                    ].users
+                                    if hasattr(user, "cognito_user_sub")
+                                ]
+                            )
+                        )
+
                         if (
                             relationship.role_id
                             and roles.get(str(relationship.role_id).strip())
                             and relationship.user_id
                             and users.get(str(relationship.user_id).strip())
+                            and str(relationship.user_id).strip() not in user_ids
                         ):
+
                             roles[str(relationship.role_id).strip()].users.append(
                                 users.get(str(relationship.user_id).strip())
                             )
