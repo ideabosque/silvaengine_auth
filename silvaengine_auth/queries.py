@@ -250,7 +250,7 @@ def _resolve_users(info, **kwargs):
             if (
                 not hasattr(RelationshipModel, field)
                 or type(kwargs.get(argument)) is not list
-                or len(kwargs.get(argument), []) < 1
+                or len(kwargs.get(argument, [])) < 1
             ):
                 continue
 
@@ -305,10 +305,14 @@ def _resolve_users(info, **kwargs):
                     fragments = fragments[0:3]
 
                 module_name, class_name, function_name = fragments
-                users = Utility.import_dynamically(
+                fn = Utility.import_dynamically(
                     module_name, function_name, class_name, {"logger": logger}
-                )([relationship.user_id for relationship in relationships])
-                # items = []
+                )
+
+                if not fn:
+                    continue
+
+                users = fn([relationship.user_id for relationship in relationships])
 
                 if len(users):
                     for relationship in relationships:

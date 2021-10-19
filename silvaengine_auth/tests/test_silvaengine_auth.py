@@ -129,7 +129,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_get_users_graphql(self):
         query = """
             query users(
@@ -172,12 +172,12 @@ class SilvaEngineAuthTest(unittest.TestCase):
             "pageSize": 10,
             "pageNumber": 1,
             # "roleId": ["cc1d018b-0af8-11ec-bb01-5d5264ad5593"],
-            "roleName": ["GWI QC Manager"],
-            "roleType": [2],
+            # "roleName": ["GWI QC Manager"],
+            "roleType": [1, 2],
             "roleStatus": True,
             "isAdminRole": True,
-            # "ownerId": ["2018"],
-            # "relationshipType": 1,
+            "ownerId": ["2018"],
+            "relationshipType": 3,
             # "relationshipStatus": True,
         }
         payload = {"query": query, "variables": variables}
@@ -429,7 +429,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_save_relationships(self):
         mutation = """
             mutation saveRelationships(
