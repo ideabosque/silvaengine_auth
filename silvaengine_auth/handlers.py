@@ -95,20 +95,6 @@ def _create_relationship_handler(info, kwargs):
     try:
         relationship_id = str(uuid.uuid1())
         now = datetime.utcnow()
-
-        # RelationshipModel(
-        #     relationship_id,
-        #     **{
-        #         "type": kwargs.get("relationship_type"),
-        #         "user_id": kwargs.get("user_id"),
-        #         "role_id": kwargs.get("role_id"),
-        #         "group_id": kwargs.get("group_id"),
-        #         "created_at": now,
-        #         "updated_at": now,
-        #         "updated_by": kwargs.get("updated_by"),
-        #         "status": bool(kwargs.get("status", True)),
-        #     },
-        # ).save()
         filter_conditions = (
             (RelationshipModel.type == int(kwargs.get("relationship_type", 0)))
             & (RelationshipModel.user_id == str(kwargs.get("user_id")).strip())
@@ -192,6 +178,7 @@ def _create_relationship_handler(info, kwargs):
                 },
             ).save()
 
+        print("Save successful:", relationship_id)
         return RelationshipModel.get(relationship_id)
     except Exception as e:
         raise e
@@ -1139,6 +1126,54 @@ def _get_users_by_role_type(role_types, relationship_type=0, group_ids=None):
             roles.append(item)
 
     return roles
+
+
+def _get_roles_by_type(types, status=None, is_admin=None):
+    try:
+        types = list(set([int(role_type) for role_type in types]))
+
+        filter_condition = RoleModel.type.is_in(*types)
+
+        if type(status) is bool:
+            filter_condition = (filter_condition) & (RoleModel.status == status)
+
+        if type(is_admin) is bool:
+            filter_condition = (filter_condition) & (RoleModel.is_admin == is_admin)
+
+        roles = {}
+
+        for role in RoleModel.scan(filter_condition=filter_condition):
+            if type(roles.get(role.type)) is not list:
+                roles[role.type] = []
+
+            roles[role.type].append(role)
+
+        return roles
+    except Exception as e:
+        raise e
+
+
+def _delete_relationships_by_condition(role_id, relationship_type, group_id):
+    try:
+        if not role_id or not relationship_type or not group_id:
+            raise Exception("Missing required parameters", 400)
+
+        filter_condition = (
+            (RelationshipModel.role_id == role_id)
+            & (RelationshipModel.type == relationship_type)
+            & (
+                RelationshipModel.group_id.does_not_exist()
+                if group_id is None
+                else RelationshipModel.group_id == str(group_id).strip()
+            )
+        )
+
+        for relationship in RelationshipModel.scan(filter_condition=filter_condition):
+            relationship.delete()
+
+        return True
+    except Exception as e:
+        raise e
 
 
 def add_resource():

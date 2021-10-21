@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+from enum import Enum
 from pynamodb.models import Model
 from pynamodb.attributes import (
     ListAttribute,
@@ -13,6 +14,20 @@ from pynamodb.attributes import (
 import os
 
 __author__ = "bl"
+
+
+class RoleType(Enum):
+    NORMAL = 0
+    ACCOUNT_MANAGER = 1
+    QC_MANAGER = 2
+    DEPT_MANAGER = 3
+
+
+class RoleRelationshipType(Enum):
+    ADMINISTRATOR = 0
+    SELLER = 1
+    COMPANY = 2
+    FACTORY = 3
 
 
 class BaseModel(Model):
@@ -45,16 +60,6 @@ class TraitModel(BaseModel):
     updated_by = UnicodeAttribute()
 
 
-# Plan B:
-# permissions = [
-#     {
-#         "label": "FUNCTION NAME",
-#         "permissions": [
-#              "field": TYPE,
-#              "exclude": []
-#         ]
-#     }
-# ]
 class ResourceConstraintMap(MapAttribute):
     operation = UnicodeAttribute()
     operation_name = UnicodeAttribute()

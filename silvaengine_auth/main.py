@@ -19,6 +19,9 @@ from .handlers import (
     _authorize_response,
     _get_roles_by_cognito_user_sub,
     _get_users_by_role_type,
+    _create_relationship_handler,
+    _get_roles_by_type,
+    _delete_relationships_by_condition,
 )
 
 # Hook function applied to deployment
@@ -211,5 +214,36 @@ class Auth(object):
     def get_users_by_role_type(self, role_types, relationship_type=0, ids=None):
         try:
             return _get_users_by_role_type(role_types, relationship_type, ids)
+        except Exception as e:
+            raise e
+
+    def save_role_relationship(
+        self, info, role_type, relationship_type, group_id, user_ids, updated_by=None
+    ):
+        try:
+            # 1. Get roles by role type
+            roles = _get_roles_by_type([role_type])
+
+            # 2. save relationship.
+            if type(roles.get(role_type)) is list and type(user_ids) is list:
+                for role in roles.get(role_type):
+                    if len(user_ids):
+                        for user_id in list(set(user_ids)):
+                            kwargs = {
+                                "role_id": role.role_id,
+                                "relationship_type": relationship_type,
+                                "group_id": group_id,
+                                "user_id": user_id,
+                                "updated_by": updated_by,
+                                "status": True,
+                            }
+                        _create_relationship_handler(info, kwargs)
+                    else:
+                        _delete_relationships_by_condition(
+                            role_id=role.role_id,
+                            relationship_type=relationship_type,
+                            group_id=group_id,
+                        )
+
         except Exception as e:
             raise e
