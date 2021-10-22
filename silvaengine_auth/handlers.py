@@ -13,7 +13,13 @@ from silvaengine_resource import ResourceModel
 from pynamodb.transactions import TransactWrite
 from pynamodb.connection import Connection
 from .utils import validate_required, get_seller_id, is_admin_user
-from .models import ConnectionModel, RelationshipModel, RoleModel, ConfigDataModel
+from .models import (
+    ConnectionModel,
+    RelationshipModel,
+    RoleModel,
+    ConfigDataModel,
+    RoleRelationshipType,
+)
 import uuid, json, time, urllib.request, os
 
 
@@ -178,7 +184,7 @@ def _create_relationship_handler(info, kwargs):
                 },
             ).save()
 
-        print("Save successful:", relationship_id)
+        # print("Save successful:", relationship_id)
         return RelationshipModel.get(relationship_id)
     except Exception as e:
         raise e
@@ -992,14 +998,15 @@ def _get_roles_by_cognito_user_sub(
         if relationship.role_id and relationship.group_id:
             rid = str(relationship.role_id).strip()
             gid = str(relationship.group_id).strip()
+            relationship.type
 
             if not rid in role_ids:
                 role_ids.append(rid)
 
-            if group_roles.get(gid) is None or type(group_roles.get(gid)) is not list:
-                group_roles[gid] = [rid]
+            if group_roles.get(gid) is None:
+                group_roles[gid] = {"type": relationship.type, "role_ids": [rid]}
             else:
-                group_roles[gid].append(rid)
+                group_roles[gid]["role_ids"].append(rid)
 
     if len(role_ids):
         roles = {}
@@ -1016,12 +1023,18 @@ def _get_roles_by_cognito_user_sub(
                 roles[role.get("role_id")] = {
                     "name": role.get("name"),
                     "id": role.get("role_id"),
+                    "type": role.get("type"),
                 }
 
-        for gid, rids in group_roles.items():
+        for gid, value in group_roles.items():
             group_roles[gid] = {
                 "group_id": gid,
-                "roles": [roles.get(rid) for rid in list(set(rids)) if roles.get(rid)],
+                "relationship_type": value.get("type"),
+                "roles": [
+                    roles.get(rid)
+                    for rid in list(set(value.get("role_ids")))
+                    if roles.get(rid)
+                ],
             }
 
     return group_roles.values()
@@ -1029,7 +1042,7 @@ def _get_roles_by_cognito_user_sub(
 
 # Obtain user roles according to the specified user ID
 # relationship_type: 0 - team, 1 - seller
-def _get_users_by_role_type(role_types, relationship_type=0, group_ids=None):
+def _get_users_by_role_type(role_types, relationship_type=0, group_ids=None) -> list:
     if type(role_types) is not list and len(role_types):
         return []
 
@@ -1054,19 +1067,6 @@ def _get_users_by_role_type(role_types, relationship_type=0, group_ids=None):
 
         if item.get("permissions"):
             del item["permissions"]
-
-        # if type(group_ids) is list and len(group_ids):
-        #     if len(group_ids) < 100:
-        #         filter_condition = (filter_condition) & (
-        #             RelationshipModel.group_id.is_in(*group_ids)
-        #         )
-        #     else:
-        #         conditon = RelationshipModel.group_id == group_ids.pop(0)
-
-        #         for group_id in group_ids:
-        #             conditon = (conditon) | (RelationshipModel.group_id == group_id)
-
-        #         filter_condition = (filter_condition) & (conditon)
 
         relationships = [
             Utility.json_loads(Utility.json_dumps(user.__dict__["attribute_values"]))
@@ -1117,56 +1117,83 @@ def _get_users_by_role_type(role_types, relationship_type=0, group_ids=None):
 
                     response[relationship.get("group_id")].append(relationship)
 
-            # for index, user in enumerate(users):
-            #     if user.get("user_id"):
-            #         print(fn(user.get("user_id")))
-            #         users[index].update(fn(user.get("user_id")))
-
             item.update({"groups": response})
             roles.append(item)
 
     return roles
 
 
-def _get_roles_by_type(types, status=None, is_admin=None):
+def _get_roles_by_type(types, status=None, is_admin=None) -> dict:
     try:
-        types = list(set([int(role_type) for role_type in types]))
-
-        filter_condition = RoleModel.type.is_in(*types)
-
-        if type(status) is bool:
-            filter_condition = (filter_condition) & (RoleModel.status == status)
-
-        if type(is_admin) is bool:
-            filter_condition = (filter_condition) & (RoleModel.is_admin == is_admin)
-
         roles = {}
 
-        for role in RoleModel.scan(filter_condition=filter_condition):
-            if type(roles.get(role.type)) is not list:
-                roles[role.type] = []
+        if type(types) is list and len(types):
+            types = list(set([int(role_type) for role_type in types]))
+            filter_condition = RoleModel.type.is_in(*types)
 
-            roles[role.type].append(role)
+            if type(status) is bool:
+                filter_condition = filter_condition & (RoleModel.status == status)
+
+            if type(is_admin) is bool:
+                filter_condition = filter_condition & (RoleModel.is_admin == is_admin)
+
+            for role in RoleModel.scan(filter_condition=filter_condition):
+                if type(roles.get(role.type)) is not list:
+                    roles[role.type] = []
+
+                roles[role.type].append(role)
 
         return roles
     except Exception as e:
         raise e
 
 
-def _delete_relationships_by_condition(role_id, relationship_type, group_id):
+# Delete user roles by conditions.
+def _delete_relationships_by_condition(
+    relationship_type, role_ids=None, group_ids=None, user_ids=None
+):
     try:
-        if not role_id or not relationship_type or not group_id:
+        if not relationship_type:
             raise Exception("Missing required parameters", 400)
-
-        filter_condition = (
-            (RelationshipModel.role_id == role_id)
-            & (RelationshipModel.type == relationship_type)
-            & (
-                RelationshipModel.group_id.does_not_exist()
-                if group_id is None
-                else RelationshipModel.group_id == str(group_id).strip()
+        elif (
+            (
+                type(group_ids) is list
+                and len(group_ids) > 99
+                and RoleRelationshipType.ADMINISTRATOR.value != relationship_type
             )
-        )
+            or (type(role_ids) is list and len(role_ids) > 99)
+            or (type(user_ids) is list and len(user_ids) > 99)
+        ):
+            raise Exception(
+                "The number of batch query operations must be less than 100", 400
+            )
+
+        filter_conditions = [RelationshipModel.type == int(relationship_type)]
+
+        if RoleRelationshipType.ADMINISTRATOR.value == relationship_type:
+            filter_conditions.append(RelationshipModel.group_id.does_not_exist())
+        elif type(group_ids) is list and len(group_ids):
+            group_ids = list(set([str(group_id).strip() for group_id in group_ids]))
+
+            filter_conditions.append(RelationshipModel.group_id.is_in(*group_ids))
+
+        if type(role_ids) is list and len(role_ids):
+            role_ids = list(set([str(role_id).strip() for role_id in role_ids]))
+
+            filter_conditions.append(RelationshipModel.role_id.is_in(*role_ids))
+
+        if type(user_ids) is list and len(user_ids):
+            user_ids = list(set([str(user_id).strip() for user_id in user_ids]))
+
+            filter_conditions.append(RelationshipModel.user_id.is_in(*user_ids))
+
+        filter_condition = None
+
+        if len(filter_conditions):
+            filter_condition = filter_conditions.pop(0)
+
+            for condition in filter_conditions:
+                filter_condition = filter_condition & (condition)
 
         for relationship in RelationshipModel.scan(filter_condition=filter_condition):
             relationship.delete()

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
+
 __author__ = "bl"
 
 from graphene import Schema
@@ -23,6 +24,7 @@ from .handlers import (
     _get_roles_by_type,
     _delete_relationships_by_condition,
 )
+from .models import RoleRelationshipType
 
 # Hook function applied to deployment
 def deploy() -> list:
@@ -211,14 +213,21 @@ class Auth(object):
             raise e
 
     # Get users
-    def get_users_by_role_type(self, role_types, relationship_type=0, ids=None):
+    def get_users_by_role_type(self, role_types, relationship_type=0, ids=None) -> list:
         try:
             return _get_users_by_role_type(role_types, relationship_type, ids)
         except Exception as e:
             raise e
 
+    # Save role relationships
     def save_role_relationship(
-        self, info, role_type, relationship_type, group_id, user_ids, updated_by=None
+        self,
+        info,
+        role_type,
+        relationship_type,
+        group_id,
+        user_ids,
+        updated_by=None,
     ):
         try:
             # 1. Get roles by role type
@@ -227,23 +236,94 @@ class Auth(object):
             # 2. save relationship.
             if type(roles.get(role_type)) is list and type(user_ids) is list:
                 for role in roles.get(role_type):
+                    kwargs = {
+                        "role_ids": [role.role_id],
+                        "relationship_type": relationship_type,
+                        "user_ids": user_ids,
+                        "group_ids": [group_id],
+                    }
+
+                    if relationship_type == RoleRelationshipType.FACTORY.value:
+                        del kwargs["group_ids"]
+                    else:
+                        del kwargs["user_ids"]
+
+                    _delete_relationships_by_condition(**kwargs)
+
                     if len(user_ids):
                         for user_id in list(set(user_ids)):
                             kwargs = {
                                 "role_id": role.role_id,
                                 "relationship_type": relationship_type,
-                                "group_id": group_id,
                                 "user_id": user_id,
                                 "updated_by": updated_by,
                                 "status": True,
                             }
+
+                            if group_id is not None:
+                                kwargs["group_id"] = group_id
+
                         _create_relationship_handler(info, kwargs)
-                    else:
+
+        except Exception as e:
+            raise e
+
+    # Assign users to role.
+    def assign_roles_to_users(
+        info,
+        role_users_map,
+        relationship_type,
+        updated_by,
+        group_id=None,
+        is_remove_existed=True,
+    ):
+        try:
+
+            if type(role_users_map) is dict and len(role_users_map):
+                group_ids = None
+
+                if relationship_type != RoleRelationshipType.ADMINISTRATOR.value:
+                    group_ids = group_id if type(group_id) is list else [group_id]
+
+                for role_id, user_ids in role_users_map.items():
+                    if is_remove_existed:
                         _delete_relationships_by_condition(
-                            role_id=role.role_id,
-                            relationship_type=relationship_type,
-                            group_id=group_id,
+                            relationship_types=[relationship_type],
+                            group_ids=group_ids,
+                            user_ids=user_ids,
+                            role_ids=role_id,
                         )
+
+                    for user_id in user_ids:
+                        kwargs = {
+                            "role_id": role_id,
+                            "relationship_type": relationship_type,
+                            "user_id": user_id,
+                            "updated_by": updated_by,
+                            "status": True,
+                        }
+
+                        if group_ids is not None:
+                            for group_id in group_ids:
+                                kwargs["group_id"] = group_id
+
+                                _create_relationship_handler(info, kwargs)
+                        else:
+                            _create_relationship_handler(info, kwargs)
+        except Exception as e:
+            raise e
+
+    # Remove user's role
+    def remove_roles_from_users(
+        info, relationship_type, user_ids=None, group_ids=None, role_ids=None
+    ):
+        try:
+            _delete_relationships_by_condition(
+                relationship_type=relationship_type,
+                group_ids=group_ids,
+                user_ids=user_ids,
+                role_ids=role_ids,
+            )
 
         except Exception as e:
             raise e
