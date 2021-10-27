@@ -66,7 +66,7 @@ def deploy() -> list:
                         {"action": "role", "label": "View Role"},
                         {"action": "users", "label": "Query permission relationships"},
                         {
-                            "action": "resolve_detection",
+                            "action": "detection",
                             "label": "Role uniqueness detection",
                         },
                     ],
