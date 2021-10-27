@@ -508,29 +508,41 @@ def _resolve_detection(info, **kwargs):
         else (
             (
                 RoleModel.type.is_in(
-                    RoleType.ACCOUNT_MANAGER.value,
-                    RoleType.QC_MANAGER.value,
-                    RoleType.DEPT_MANAGER.value,
+                    *[
+                        RoleType.ACCOUNT_MANAGER.value,
+                        RoleType.QC_MANAGER.value,
+                        RoleType.DEPT_MANAGER.value,
+                    ]
                 )
             )
         )
     )
 
-    roles = {
+    types = {
         t.value: {
             "type_alias": t.name,
-            "is_unique": t.value != RoleType.NORMAL.value,
+            "is_exclusive": t.value != RoleType.NORMAL.value,
             "roles": [],
         }
         for t in RoleType
     }
+    roles = {}
 
     for role in RoleModel.scan(filter_condition=filter_conditions):
-        if roles.get(role.type) and roles[role.type].get("roles"):
-            roles[role.type]["roles"].append(
-                {
-                    "name": role.name,
-                }
-            )
+        role = role.__dict__["attribute_values"]
+
+        if role.get("type") is not None:
+            if roles.get(role.get("type")) is None and types.get(role.get("type")):
+                roles[role.get("type")] = types.get(role.get("type"))
+
+            if (
+                roles.get(role.get("type")) is not None
+                and type(roles[role.get("type")].get("roles")) is list
+            ):
+                roles[role.get("type")]["roles"].append(
+                    {
+                        "name": role.get("name", ""),
+                    }
+                )
 
     return RoleDetectionType(roles=roles)

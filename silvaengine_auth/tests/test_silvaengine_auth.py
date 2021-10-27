@@ -137,6 +137,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                 }
             }
         """
+        # variables = {"name": "GWI Account Manager"}
         variables = {}
         payload = {"query": query, "variables": variables}
         response = self.auth.role_graphql(**payload)
