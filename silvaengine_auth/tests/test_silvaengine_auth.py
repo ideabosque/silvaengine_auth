@@ -4,15 +4,21 @@ from __future__ import print_function
 
 __author__ = "bl"
 
-import logging, sys, json, unittest, uuid, os
+
 from datetime import datetime, timedelta, date
 from decimal import Decimal
-from pathlib import Path
 from silvaengine_utility import Utility
-
 from dotenv import load_dotenv
+from os import path
+import logging, sys, unittest, uuid, os
 
 load_dotenv()
+sys.path.insert(0, path.dirname(path.dirname(path.dirname(path.realpath(__file__)))))
+
+from silvaengine_auth import Auth
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logger = logging.getLogger()
 setting = {
     "region_name": os.getenv("region_name"),
     "aws_access_key_id": os.getenv("aws_access_key_id"),
@@ -21,13 +27,6 @@ setting = {
     "app_client_secret": os.getenv("app_client_secret"),
     "custom_hooks": "relation_engine:RelationEngine:get_users_by_cognito_user_id",
 }
-
-sys.path.insert(0, "/var/www/projects/silvaengine_auth")
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logger = logging.getLogger()
-
-from silvaengine_auth import Auth
 
 
 class SilvaEngineAuthTest(unittest.TestCase):
@@ -130,6 +129,20 @@ class SilvaEngineAuthTest(unittest.TestCase):
         logger.info(response)
 
     # @unittest.skip("demonstrating skipping")
+    def test_role_detection(self):
+        query = """
+            query detection( $name: String){
+                detection (name: $name){
+                    roles
+                }
+            }
+        """
+        variables = {}
+        payload = {"query": query, "variables": variables}
+        response = self.auth.role_graphql(**payload)
+        logger.info(response)
+
+    @unittest.skip("demonstrating skipping")
     def test_get_users_graphql(self):
         query = """
             query users(

@@ -11,12 +11,14 @@ from .types import (
     RelationshipsType,
     UserRelationshipsType,
     SimilarUsersType,
+    RoleDetectionType,
 )
 from .queries import (
     _resolve_roles,
     _resolve_role,
     _resolve_certificate,
     _resolve_users,
+    _resolve_detection,
 )
 from .mutations import (
     CreateRole,
@@ -90,6 +92,8 @@ class RoleQuery(ObjectType):
         relationship_status=Boolean(),
     )
 
+    detection = Field(RoleDetectionType, name=String())
+
     def resolve_roles(self, info, **kwargs):
         return _resolve_roles(info, **kwargs)
 
@@ -98,6 +102,9 @@ class RoleQuery(ObjectType):
 
     def resolve_users(self, info, **kwargs):
         return _resolve_users(info, **kwargs)
+
+    def resolve_detection(self, info, **kwargs):
+        return _resolve_detection(info, **kwargs)
 
 
 # Modify role / relation list or role / relation

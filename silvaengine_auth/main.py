@@ -65,6 +65,10 @@ def deploy() -> list:
                         {"action": "roles", "label": "View Roles"},
                         {"action": "role", "label": "View Role"},
                         {"action": "users", "label": "Query permission relationships"},
+                        {
+                            "action": "resolve_detection",
+                            "label": "Role uniqueness detection",
+                        },
                     ],
                     "type": "RequestResponse",
                     "support_methods": ["POST"],

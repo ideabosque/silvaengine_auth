@@ -14,8 +14,9 @@ from .types import (
     UserRelationshipsType,
     SimilarUserType,
     SimilarUsersType,
+    RoleDetectionType,
 )
-from .models import RelationshipModel, RoleModel
+from .models import RelationshipModel, RoleModel, RoleType
 from .handlers import _get_user_permissions
 import boto3, os, hmac, hashlib, base64
 
@@ -495,3 +496,41 @@ def _resolve_certificate(info, **kwargs):
         )
     except Exception as e:
         raise e
+
+
+# Role uniqueness detection
+def _resolve_detection(info, **kwargs):
+    role_name = kwargs.get("name")
+
+    filter_conditions = (
+        ((RoleModel.name == role_name))
+        if role_name is not None and role_name != ""
+        else (
+            (
+                RoleModel.type.is_in(
+                    RoleType.ACCOUNT_MANAGER.value,
+                    RoleType.QC_MANAGER.value,
+                    RoleType.DEPT_MANAGER.value,
+                )
+            )
+        )
+    )
+
+    roles = {
+        t.value: {
+            "type_alias": t.name,
+            "is_unique": t.value != RoleType.NORMAL.value,
+            "roles": [],
+        }
+        for t in RoleType
+    }
+
+    for role in RoleModel.scan(filter_condition=filter_conditions):
+        if roles.get(role.type) and roles[role.type].get("roles"):
+            roles[role.type]["roles"].append(
+                {
+                    "name": role.name,
+                }
+            )
+
+    return RoleDetectionType(roles=roles)

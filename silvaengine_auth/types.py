@@ -138,3 +138,7 @@ class RelationshipInputType(InputObjectType):
     role_id = String(required=True)
     updated_by = String()
     status = Boolean()
+
+
+class RoleDetectionType(ObjectType):
+    roles = JSON()
