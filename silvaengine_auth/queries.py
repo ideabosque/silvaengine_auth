@@ -7,7 +7,7 @@ from silvaengine_utility import Utility
 from jose import jwk, jwt
 from .types import (
     RelationshipType,
-    RoleType,
+    RoleType as OutputRoleType,
     RolesType,
     CertificateType,
     UserRelationshipType,
@@ -18,7 +18,7 @@ from .types import (
 )
 from .models import RelationshipModel, RoleModel, RoleType
 from .handlers import _get_user_permissions
-import boto3, os, hmac, hashlib, base64
+import boto3, os, hmac, hashlib, base64, json
 
 
 # @TODO: Apply status check
@@ -105,7 +105,7 @@ def _resolve_roles(info, **kwargs):
         # Query role form database.
         results = RoleModel.scan(**arguments)
         roles = [
-            RoleType(
+            OutputRoleType(
                 **Utility.json_loads(
                     Utility.json_dumps(dict(**role.__dict__["attribute_values"]))
                 )
@@ -361,7 +361,7 @@ def _resolve_users(info, **kwargs):
 def _resolve_role(info, **kwargs):
     role = RoleModel.get(kwargs.get("role_id"))
 
-    return RoleType(
+    return OutputRoleType(
         **Utility.json_loads(Utility.json_dumps(role.__dict__["attribute_values"]))
     )
 
