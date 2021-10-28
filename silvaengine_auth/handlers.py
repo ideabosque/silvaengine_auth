@@ -19,6 +19,7 @@ from .models import (
     RoleModel,
     ConfigDataModel,
     RoleRelationshipType,
+    RoleType,
 )
 import uuid, json, time, urllib.request, os
 
@@ -996,9 +997,14 @@ def _get_roles_by_cognito_user_sub(
             rid = str(relationship.role_id).strip()
             gid = (
                 str(relationship.group_id).strip()
-                if relationship.group_id
-                else "gwi_admin"
+                if relationship.group_id is not None
+                else str(RoleType.NORMAL.name).strip().lower()
             )
+
+            print("getattr is none:::::", getattr(relationship, "group_id") is None)
+            print("not getattr:::::", not getattr(relationship, "group_id"))
+            print("group id:::::", relationship.group_id)
+            print("group id is not none::::", relationship.group_id is not None)
 
             if not rid in role_ids:
                 role_ids.append(rid)
@@ -1154,7 +1160,7 @@ def _delete_relationships_by_condition(
     relationship_type, role_ids=None, group_ids=None, user_ids=None
 ):
     try:
-        if not relationship_type:
+        if relationship_type is None:
             raise Exception("Missing required parameters", 400)
         elif (
             (

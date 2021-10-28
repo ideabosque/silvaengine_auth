@@ -282,6 +282,7 @@ class Auth(object):
 
     # Assign users to role.
     def assign_roles_to_users(
+        self,
         info,
         role_users_map,
         relationship_type,
@@ -290,7 +291,6 @@ class Auth(object):
         is_remove_existed=True,
     ):
         try:
-
             if type(role_users_map) is dict and len(role_users_map):
                 group_ids = None
 
@@ -300,7 +300,7 @@ class Auth(object):
                 for role_id, user_ids in role_users_map.items():
                     if is_remove_existed:
                         _delete_relationships_by_condition(
-                            relationship_types=[relationship_type],
+                            relationship_type=relationship_type,
                             group_ids=group_ids,
                             user_ids=user_ids,
                             role_ids=role_id,
@@ -308,7 +308,7 @@ class Auth(object):
 
                     for user_id in user_ids:
                         kwargs = {
-                            "role_id": role_id,
+                            "role_id": str(role_id).strip(),
                             "relationship_type": relationship_type,
                             "user_id": user_id,
                             "updated_by": updated_by,
@@ -316,7 +316,7 @@ class Auth(object):
                         }
 
                         if group_ids is not None:
-                            for group_id in group_ids:
+                            for group_id in list(set(group_ids)):
                                 kwargs["group_id"] = group_id
 
                                 _create_relationship_handler(info, kwargs)
@@ -327,7 +327,7 @@ class Auth(object):
 
     # Remove user's role
     def remove_roles_from_users(
-        info, relationship_type, user_ids=None, group_ids=None, role_ids=None
+        self, info, relationship_type, user_ids=None, group_ids=None, role_ids=None
     ):
         try:
             _delete_relationships_by_condition(
