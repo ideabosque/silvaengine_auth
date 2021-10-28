@@ -971,18 +971,15 @@ def convert_permisson_as_dict(permissions):
 
 # Obtain user roles according to the specified user ID
 def _get_roles_by_cognito_user_sub(
-    cognito_user_sub, relationship_type, group_id=None, ignore_permissions=True
+    user_id, relationship_type, group_id=None, ignore_permissions=True
 ):
-    if (
-        not cognito_user_sub
-        or str(cognito_user_sub).strip() == ""
-        or relationship_type is None
-    ):
+    # 1. If user or relationship type is empty
+    if not user_id or str(user_id).strip() == "" or relationship_type is None:
         return []
 
     arguments = {
         "limit": None,
-        "filter_condition": (RelationshipModel.user_id == str(cognito_user_sub).strip())
+        "filter_condition": (RelationshipModel.user_id == str(user_id).strip())
         & (RelationshipModel.type == int(relationship_type)),
     }
 
@@ -995,10 +992,13 @@ def _get_roles_by_cognito_user_sub(
     group_roles = {}
 
     for relationship in RelationshipModel.scan(**arguments):
-        if relationship.role_id and relationship.group_id:
+        if relationship.role_id:
             rid = str(relationship.role_id).strip()
-            gid = str(relationship.group_id).strip()
-            relationship.type
+            gid = (
+                str(relationship.group_id).strip()
+                if relationship.group_id
+                else "gwi_admin"
+            )
 
             if not rid in role_ids:
                 role_ids.append(rid)
@@ -1011,6 +1011,7 @@ def _get_roles_by_cognito_user_sub(
     if len(role_ids):
         roles = {}
 
+        # @TODO: If role_ids more than 100, will be failure.
         for role in RoleModel.scan(RoleModel.role_id.is_in(*list(set(role_ids)))):
             role = Utility.json_loads(
                 Utility.json_dumps(role.__dict__["attribute_values"])
@@ -1194,6 +1195,8 @@ def _delete_relationships_by_condition(
 
             for condition in filter_conditions:
                 filter_condition = filter_condition & (condition)
+
+        print(filter_condition)
 
         for relationship in RelationshipModel.scan(filter_condition=filter_condition):
             relationship.delete()

@@ -6,12 +6,10 @@ from importlib import import_module
 from silvaengine_utility import Utility
 from jose import jwk, jwt
 from .types import (
-    RelationshipType,
     RoleType as OutputRoleType,
     RolesType,
     CertificateType,
     UserRelationshipType,
-    UserRelationshipsType,
     SimilarUserType,
     SimilarUsersType,
     RoleDetectionType,

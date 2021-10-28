@@ -149,7 +149,6 @@ class Auth(object):
                 }
             )
         except Exception as e:
-            print(e)
             raise e
 
     # Role interface by graphql
@@ -229,7 +228,7 @@ class Auth(object):
         info,
         role_type,
         relationship_type,
-        group_id,
+        group_ids,
         user_ids,
         updated_by=None,
     ):
@@ -244,7 +243,9 @@ class Auth(object):
                         "role_ids": [role.role_id],
                         "relationship_type": relationship_type,
                         "user_ids": user_ids,
-                        "group_ids": [group_id],
+                        "group_ids": list(set(group_ids))
+                        if type(group_ids) is list
+                        else [str(group_ids).strip()],
                     }
 
                     if relationship_type == RoleRelationshipType.FACTORY.value:
@@ -264,10 +265,17 @@ class Auth(object):
                                 "status": True,
                             }
 
-                            if group_id is not None:
-                                kwargs["group_id"] = group_id
+                            if type(group_ids) is list:
+                                if len(group_ids):
+                                    for group_id in list(set(group_ids)):
+                                        if str(group_id).strip() != "":
+                                            kwargs["group_id"] = str(group_id).strip()
 
-                        _create_relationship_handler(info, kwargs)
+                                            _create_relationship_handler(info, kwargs)
+                            else:
+                                kwargs["group_id"] = str(group_ids).strip()
+
+                                _create_relationship_handler(info, kwargs)
 
         except Exception as e:
             raise e
