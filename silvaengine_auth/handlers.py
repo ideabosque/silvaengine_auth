@@ -1196,8 +1196,6 @@ def _delete_relationships_by_condition(
             for condition in filter_conditions:
                 filter_condition = filter_condition & (condition)
 
-        print(filter_condition)
-
         for relationship in RelationshipModel.scan(filter_condition=filter_condition):
             relationship.delete()
 
