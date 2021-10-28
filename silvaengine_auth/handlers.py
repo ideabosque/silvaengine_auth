@@ -997,14 +997,10 @@ def _get_roles_by_cognito_user_sub(
             rid = str(relationship.role_id).strip()
             gid = (
                 str(relationship.group_id).strip()
-                if relationship.group_id is not None
+                if relationship.group_id
+                and str(relationship.group_id).strip().lower() != "none"
                 else str(RoleType.NORMAL.name).strip().lower()
             )
-
-            print("getattr is none:::::", getattr(relationship, "group_id") is None)
-            print("not getattr:::::", not getattr(relationship, "group_id"))
-            print("group id:::::", relationship.group_id)
-            print("group id is not none::::", relationship.group_id is not None)
 
             if not rid in role_ids:
                 role_ids.append(rid)
