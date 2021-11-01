@@ -320,11 +320,13 @@ def _resolve_users(info, **kwargs):
                         user_ids = list(
                             set(
                                 [
-                                    user.cognito_user_sub
+                                    # user.cognito_user_sub
+                                    str(user["id"])
                                     for user in roles[
                                         str(relationship.role_id).strip()
                                     ].users
-                                    if hasattr(user, "cognito_user_sub")
+                                    # if hasattr(user, "cognito_user_sub")
+                                    if ('id' in user)
                                 ]
                             )
                         )
