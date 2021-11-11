@@ -258,8 +258,8 @@ def _save_relationships_handler(info, relationships):
         for relationship in relationships:
             if (
                 relationship.get("type") is None
-                or relationship.get("user_id")
-                or relationship.get("role_id")
+                or not relationship.get("user_id")
+                or not relationship.get("role_id")
                 or (
                     int(relationship.get("type", 0)) != 0
                     and not relationship.get("group_id")
