@@ -504,6 +504,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
                    refreshToken
                    permissions
                    context
+                   expiresIn
                 }
             }
         """
