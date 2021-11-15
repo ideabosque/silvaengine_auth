@@ -268,87 +268,20 @@ def _save_relationships_handler(info, relationships):
                 raise Exception("Bad reqeust", 400)
 
             filter_conditions = (
-                (RelationshipModel.type == int(relationship.get("type", 0)))
-                & (
-                    RelationshipModel.user_id
-                    == str(relationship.get("user_id")).strip()
-                )
-                # & (
-                #     RelationshipModel.role_id
-                #     == str(relationship.get("role_id")).strip()
-                # )
-                # & (
-                #     RelationshipModel.group_id
-                #     == str(relationship.get("group_id")).strip()
-                # )
-            )
+                RelationshipModel.type == int(relationship.get("type", 0))
+            ) & (RelationshipModel.user_id == str(relationship.get("user_id")).strip())
 
             if int(relationship.get("type", 0)) != 0 and relationship.get("group_id"):
                 filter_conditions = filter_conditions & (
                     RelationshipModel.group_id
                     == str(relationship.get("group_id")).strip()
                 )
-            # relationship_ids = list(
-            #     set(
-            #         [
-            #             str(item.relationship_id).strip()
-            #             for item in RelationshipModel.scan(
-            #                 filter_condition=filter_conditions
-            #             )
-            #         ]
-            #     )
-            # )
 
-            print(filter_conditions)
             for item in RelationshipModel.scan(filter_condition=filter_conditions):
                 print("RELATIONSHIP ID:::::::", str(item.relationship_id).strip())
                 _delete_relationship_handler(info, str(item.relationship_id).strip())
 
-            # if len(relationship_ids):
-            #     actions = [
-            #         RelationshipModel.updated_at.set(now),
-            #         RelationshipModel.updated_by.set(
-            #             str(
-            #                 relationship.get(
-            #                     "updated_by",
-            #                     info.context.get("authorizer", {}).get(
-            #                         "user_id", "setup"
-            #                     ),
-            #                 )
-            #             ).strip()
-            #         ),
-            #     ]
-            #     rules = {
-            #         "type": {"field": "type", "type": "int"},
-            #         "user_id": {"field": "user_id", "type": "str"},
-            #         "role_id": {"field": "role_id", "type": "str"},
-            #         "group_id": {"field": "group_id", "type": "str"},
-            #         "status": {"field": "status", "type": "bool"},
-            #     }
-
-            #     for argument, rule in rules.items():
-            #         if relationship.get(argument) is not None and hasattr(
-            #             RelationshipModel, rule.get("field")
-            #         ):
-            #             value = relationship.get(argument)
-
-            #             if rule.get("type") == "int":
-            #                 value = int(value)
-            #             elif rule.get("type") == "str":
-            #                 value = str(value).strip()
-            #             elif rule.get("type") == "bool":
-            #                 value = bool(value)
-
-            #             actions.append(
-            #                 getattr(RelationshipModel, rule.get("field")).set(value)
-            #             )
-
-            #     for relationship_id in relationship_ids:
-            #         RelationshipModel(relationship_id).update(
-            #             actions=actions,
-            #             condition=RelationshipModel.relationship_id == relationship_id,
-            #         )
-            # else:
+        for relationship in relationships:
             RelationshipModel(
                 str(uuid.uuid1()),
                 **{
