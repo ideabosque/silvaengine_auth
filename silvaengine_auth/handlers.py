@@ -273,10 +273,10 @@ def _save_relationships_handler(info, relationships):
                     RelationshipModel.user_id
                     == str(relationship.get("user_id")).strip()
                 )
-                & (
-                    RelationshipModel.role_id
-                    == str(relationship.get("role_id")).strip()
-                )
+                # & (
+                #     RelationshipModel.role_id
+                #     == str(relationship.get("role_id")).strip()
+                # )
                 # & (
                 #     RelationshipModel.group_id
                 #     == str(relationship.get("group_id")).strip()
@@ -298,7 +298,10 @@ def _save_relationships_handler(info, relationships):
             #         ]
             #     )
             # )
+
+            print(filter_conditions)
             for item in RelationshipModel.scan(filter_condition=filter_conditions):
+                print("RELATIONSHIP ID:::::::", str(item.relationship_id).strip())
                 _delete_relationship_handler(info, str(item.relationship_id).strip())
 
             # if len(relationship_ids):

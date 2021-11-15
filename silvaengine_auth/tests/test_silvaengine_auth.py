@@ -37,7 +37,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     def tearDown(self):
         logger.info("Destory SilvaEngineAuthTest ...")
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_get_roles_graphql(self):
         query = """
             query roles(
@@ -447,7 +447,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_save_relationships(self):
         mutation = """
             mutation saveRelationships(
@@ -463,25 +463,16 @@ class SilvaEngineAuthTest(unittest.TestCase):
         variables = {
             "relationships": [
                 {
-                    "groupId": "2018",
-                    "roleId": "b874bcee-0af8-11ec-acc5-5d5264ad5593",
-                    "status": True,
-                    "type": 1,
-                    "userId": "f2b3a074-eb9e-4210-81b2-cbe617ecc50b",
+                    "userId": 131,
+                    "type": 2,
+                    "groupId": "470",
+                    "roleId": "c2aeb298-3838-11ec-bbb5-2dc20eac8243",
                 },
                 {
-                    "type": 1,
-                    "groupId": "2018",
-                    "userId": "4b84dfaa-565f-4fcf-92bb-2a53042ff278",
-                    "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
-                    "status": True,
-                },
-                {
-                    "type": 1,
-                    "groupId": "2018",
-                    "userId": "b3e5b070-aa6e-40f9-9d80-c453f96a9d8f",
-                    "roleId": "b874bcee-0af8-11ec-acc5-5d5264ad5593",
-                    "status": True,
+                    "userId": 131,
+                    "type": 2,
+                    "groupId": "479",
+                    "roleId": "1632a53b-3309-11ec-9501-1b1569b5c836",
                 },
             ]
         }
