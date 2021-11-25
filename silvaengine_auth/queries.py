@@ -51,9 +51,18 @@ def _resolve_roles(info, **kwargs):
             if kwargs.get(argument) is None or not hasattr(RoleModel, field):
                 continue
 
-            filter_conditions.append(
-                (getattr(RoleModel, field) == kwargs.get(argument))
-            )
+            if field == "name":
+                filter_conditions.append(
+                    (
+                        getattr(RoleModel, field).contains(
+                            str(kwargs.get(argument)).strip()
+                        )
+                    )
+                )
+            else:
+                filter_conditions.append(
+                    (getattr(RoleModel, field) == kwargs.get(argument))
+                )
 
         if kwargs.get("user_ids"):
             role_ids = [
@@ -326,7 +335,7 @@ def _resolve_users(info, **kwargs):
                                         str(relationship.role_id).strip()
                                     ].users
                                     # if hasattr(user, "cognito_user_sub")
-                                    if ('id' in user)
+                                    if ("id" in user)
                                 ]
                             )
                         )

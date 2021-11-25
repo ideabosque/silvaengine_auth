@@ -278,7 +278,6 @@ def _save_relationships_handler(info, relationships):
                 )
 
             for item in RelationshipModel.scan(filter_condition=filter_conditions):
-                print("RELATIONSHIP ID:::::::", str(item.relationship_id).strip())
                 _delete_relationship_handler(info, str(item.relationship_id).strip())
 
         for relationship in relationships:
@@ -439,20 +438,25 @@ def _verify_token(settings, event) -> dict:
 def _verify_permission(event, context):
     try:
         if (
-            not event.get("fnConfigurations").get("config").get("auth_required")
-            or event.get("requestContext")
-            .get("authorizer")
+            not event.get(
+                "fnConfigurations",
+            )
+            .get("config", {})
+            .get("auth_required")
+            or event.get("requestContext", {})
+            .get("authorizer", {})
             .get("is_allowed_by_whitelist")
             == "1"
         ):
             return event
 
+        # not event.get("requestContext", {}).get("authorizer", {}).get("sub")
         if (
-            not event.get("pathParameters").get("proxy")
+            not event.get("pathParameters", {}).get("proxy")
             or not event.get("headers")
             or not event.get("body")
             or not event.get("fnConfigurations")
-            or not event.get("requestContext").get("authorizer").get("sub")
+            or not event.get("requestContext", {}).get("authorizer", {}).get("user_id")
         ):
             raise Exception("Event is missing required parameters", 500)
 
@@ -473,7 +477,8 @@ def _verify_permission(event, context):
             if authorizer.get("is_admin")
             else False
         )
-        uid = authorizer.get("sub")
+        # uid = authorizer.get("sub")
+        uid = authorizer.get("user_id")
         owner_id = (
             str(authorizer.get("seller_id")).strip()
             if authorizer.get("seller_id")
@@ -724,7 +729,8 @@ def _get_user_permissions(authorizer):
             if authorizer.get("is_admin")
             else False
         )
-        cognito_user_sub = authorizer.get("sub")
+        # cognito_user_sub = authorizer.get("sub")
+        cognito_user_sub = authorizer.get("user_id")
 
         if not cognito_user_sub:
             return rules
