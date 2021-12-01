@@ -23,6 +23,7 @@ from .handlers import (
     _create_relationship_handler,
     _get_roles_by_type,
     _delete_relationships_by_condition,
+    _check_user_permissions,
 )
 from .models import RoleRelationshipType
 
@@ -337,5 +338,50 @@ class Auth(object):
                 role_ids=role_ids,
             )
 
+        except Exception as e:
+            raise e
+
+    # Check user permissions.
+    def check_user_permissions(
+        self,
+        module_name,
+        class_name,
+        function_name,
+        operation_type,
+        operation,
+        user_id,
+        group_id,
+    ):
+        try:
+            return _check_user_permissions(
+                module_name=module_name,
+                class_name=class_name,
+                function_name=function_name,
+                operation_type=operation_type,
+                operation=operation,
+                user_id=user_id,
+                group_id=group_id,
+            )
+
+        except Exception as e:
+            raise e
+
+    # Get roles
+    def get_roles_by_specific_user(
+        self,
+        user_id,
+        relationship_type,
+        group_id=None,
+        ignore_permissions=True,
+    ):
+        try:
+            roles = _get_roles_by_cognito_user_sub(
+                user_id, relationship_type, group_id, ignore_permissions
+            )
+
+            if len(roles):
+                return roles
+
+            return None
         except Exception as e:
             raise e

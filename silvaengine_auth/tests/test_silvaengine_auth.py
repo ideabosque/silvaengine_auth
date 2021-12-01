@@ -15,7 +15,7 @@ import logging, sys, unittest, uuid, os
 load_dotenv()
 sys.path.insert(0, path.dirname(path.dirname(path.dirname(path.realpath(__file__)))))
 
-from silvaengine_auth import Auth
+from silvaengine_auth import Auth, RoleRelationshipType
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger()
@@ -447,7 +447,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_save_relationships(self):
         mutation = """
             mutation saveRelationships(
@@ -807,6 +807,26 @@ class SilvaEngineAuthTest(unittest.TestCase):
             role_types=[2], relationship_type=1, ids=[2018]
         )
         print("Response:", response)
+
+    # @unittest.skip("demonstrating skipping")
+    def test_get_roles_by_specific_user(self):
+        response = self.auth.get_roles_by_specific_user(
+            1909, RoleRelationshipType.SELLER.value
+        )
+        print("test_get_roles_by_specific_user:::::", response)
+
+    # @unittest.skip("demonstrating skipping")
+    def test_check_user_permissions(self):
+        response = self.auth.check_user_permissions(
+            "crm_engine",
+            "CRMEngine",
+            "crm_graphql",
+            "mutation",
+            "insertCustomer",
+            118,
+            357,
+        )
+        print("test_check_user_permissions:::::", response)
 
 
 if __name__ == "__main__":

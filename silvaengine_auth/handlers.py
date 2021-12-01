@@ -570,7 +570,7 @@ def _verify_permission(event, context):
 
             if (
                 operation_name.strip().lower() not in function_operations
-            ) or not check_permission(roles, item):
+            ) or not _check_permission(roles, item):
                 raise Exception(message, 403)
 
         # Attatch additional info to context
@@ -811,7 +811,7 @@ def _get_user_permissions(authorizer):
         raise e
 
 
-def check_permission(roles, resource) -> bool:
+def _check_permission(roles, resource) -> bool:
     if (
         not resource.get("operation")
         or not resource.get("operation_name")
@@ -885,7 +885,7 @@ def check_permission(roles, resource) -> bool:
     return False
 
 
-def convert_permisson_as_dict(permissions):
+def _convert_permisson_as_dict(permissions):
     if type(permissions) is not list or len(permissions) < 1:
         return None
 
@@ -1159,6 +1159,125 @@ def _delete_relationships_by_condition(
             relationship.delete()
 
         return True
+    except Exception as e:
+        raise e
+
+
+# Check user permissions.
+def _check_user_permissions(
+    module_name,
+    class_name,
+    function_name,
+    operation_type,
+    operation,
+    user_id,
+    group_id,
+):
+    try:
+        if (
+            not module_name
+            or not class_name
+            or not function_name
+            or not operation
+            or not operation_type
+            or not user_id
+            or not group_id
+        ):
+            return False
+
+        get_users = Utility.import_dynamically(
+            "relation_engine",
+            "get_users_by_cognito_user_id",
+            "RelationEngine",
+            {"logger": None},
+        )
+
+        if not callable(get_users):
+            raise Exception("Module is not exists or the function is uncallable", 500)
+
+        users = get_users([str(user_id).strip()])
+
+        if len(users) < 1:
+            return False
+        elif bool(int(users.get(str(user_id).strip(), {}).get("is_admin", 0))):
+            return True
+
+        ### 1. Check user & team relationship exists.
+        filter_condition = (RelationshipModel.user_id == str(user_id).strip()) & (
+            RelationshipModel.group_id == str(group_id).strip()
+        )
+        role_ids = list(
+            set(
+                [
+                    relationship.role_id
+                    for relationship in RelationshipModel.scan(
+                        filter_condition=filter_condition
+                    )
+                    if relationship.role_id
+                ]
+            )
+        )
+
+        if len(role_ids) < 1:
+            return False
+
+        #### 1.1. Get roles by role ids
+        # @TODO: len(role_ids) must less than 99
+        max_length = 90
+        permissions = []
+
+        for i in range(0, len(role_ids), max_length):
+            filter_condition = RoleModel.role_id.is_in(*role_ids[i : i + max_length])
+
+            for role in RoleModel.scan(filter_condition=filter_condition):
+                if (
+                    role.permissions
+                    and type(role.permissions) is list
+                    and len(role.permissions)
+                ):
+                    permissions += role.permissions
+
+        if len(permissions) < 1:
+            return False
+
+        ### 2. Get resources.
+        filter_condition = (
+            (ResourceModel.module_name == str(module_name).strip())
+            & (ResourceModel.class_name == str(class_name).strip())
+            & (ResourceModel.function == str(function_name).strip())
+        )
+        resource_ids = list(
+            set(
+                [
+                    str(resource.resource_id).strip()
+                    for resource in ResourceModel.scan(
+                        filter_condition=filter_condition
+                    )
+                    if resource.resource_id
+                ]
+            )
+        )
+
+        if len(resource_ids) < 1:
+            return False
+
+        operation_type = str(operation_type).strip()
+        operation = str(operation).strip()
+
+        for permission in permissions:
+            if (
+                not permission.resource_id
+                or type(permission.permissions) is not list
+                or len(permission.permissions) < 1
+            ):
+                continue
+
+            if str(permission.resource_id).strip() in resource_ids:
+                for p in permission.permissions:
+                    if p.operation == operation_type and p.operation_name == operation:
+                        return True
+
+        return False
     except Exception as e:
         raise e
 
