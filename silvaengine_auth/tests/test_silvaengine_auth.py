@@ -811,7 +811,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
     # @unittest.skip("demonstrating skipping")
     def test_get_roles_by_specific_user(self):
         response = self.auth.get_roles_by_specific_user(
-            1909, RoleRelationshipType.SELLER.value
+            1906, RoleRelationshipType.SELLER.value
         )
         print("test_get_roles_by_specific_user:::::", response)
 
@@ -823,8 +823,9 @@ class SilvaEngineAuthTest(unittest.TestCase):
             "crm_graphql",
             "mutation",
             "insertCustomer",
-            118,
-            357,
+            2,
+            2086,
+            204,
         )
         print("test_check_user_permissions:::::", response)
 

@@ -349,6 +349,7 @@ class Auth(object):
         function_name,
         operation_type,
         operation,
+        relationship_type,
         user_id,
         group_id,
     ):
@@ -359,6 +360,7 @@ class Auth(object):
                 function_name=function_name,
                 operation_type=operation_type,
                 operation=operation,
+                relationship_type=relationship_type,
                 user_id=user_id,
                 group_id=group_id,
             )

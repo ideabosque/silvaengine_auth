@@ -1170,6 +1170,7 @@ def _check_user_permissions(
     function_name,
     operation_type,
     operation,
+    relationship_type,
     user_id,
     group_id,
 ):
@@ -1182,6 +1183,7 @@ def _check_user_permissions(
             or not operation_type
             or not user_id
             or not group_id
+            or relationship_type is None
         ):
             return False
 
@@ -1203,8 +1205,10 @@ def _check_user_permissions(
             return True
 
         ### 1. Check user & team relationship exists.
-        filter_condition = (RelationshipModel.user_id == str(user_id).strip()) & (
-            RelationshipModel.group_id == str(group_id).strip()
+        filter_condition = (
+            (RelationshipModel.user_id == str(user_id).strip())
+            & (RelationshipModel.group_id == str(group_id).strip())
+            & (RelationshipModel.type == int(relationship_type))
         )
         role_ids = list(
             set(
