@@ -38,14 +38,20 @@ def deploy() -> list:
                     "is_static": True,
                     "label": "Permissions",
                     "create": [
-                        {"action": "createRole", "label": "Create Role"},
+                        {
+                            "action": "createRole",
+                            "label": "Create Role",
+                        },
                         {
                             "action": "createRelationship",
                             "label": "Create relationship",
                         },
                     ],
                     "update": [
-                        {"action": "updateRole", "label": "Modify Role"},
+                        {
+                            "action": "updateRole",
+                            "label": "Modify Role",
+                        },
                         {
                             "action": "updateRelationship",
                             "label": "Update relationship",
@@ -56,16 +62,28 @@ def deploy() -> list:
                         },
                     ],
                     "delete": [
-                        {"action": "deleteRole", "label": "Delete Role"},
+                        {
+                            "action": "deleteRole",
+                            "label": "Delete Role",
+                        },
                         {
                             "action": "deleteRelationship",
                             "label": "Delete relationship",
                         },
                     ],
                     "query": [
-                        {"action": "roles", "label": "View Roles"},
-                        {"action": "role", "label": "View Role"},
-                        {"action": "users", "label": "Query permission relationships"},
+                        {
+                            "action": "roles",
+                            "label": "View Roles",
+                        },
+                        {
+                            "action": "role",
+                            "label": "View Role",
+                        },
+                        {
+                            "action": "users",
+                            "label": "Query Permission Relationships",
+                        },
                         {
                             "action": "detection",
                             "label": "Role uniqueness detection",
