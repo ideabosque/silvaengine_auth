@@ -600,7 +600,7 @@ def _authorize_response(event, context):
             (key.strip().lower(), value) for key, value in event.get("headers").items()
         )
         principal = event.get("path")
-        api_id = event.get("requestContext").get("apiId")
+        api_id = event.get("requestContext", {}).get("apiId")
         method_arn_fragments = event.get("methodArn").split(":")
         api_gateway_arn_fragments = method_arn_fragments[5].split("/")
         region = method_arn_fragments[3]
@@ -613,10 +613,10 @@ def _authorize_response(event, context):
         ctx = {}
 
         if headers.get("seller_id"):
-            ctx["seller_id"] = str(headers.get("seller_id")).strip()
+            ctx["seller_id"] = str(headers.get("seller_id", "")).strip()
 
         if headers.get("team_id"):
-            ctx["team_id"] = str(headers.get("team_id")).strip()
+            ctx["team_id"] = str(headers.get("team_id", "")).strip()
 
         ### 1. Verify source ip
         if _verify_whitelist(event, context):
