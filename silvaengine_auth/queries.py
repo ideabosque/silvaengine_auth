@@ -294,7 +294,9 @@ def _resolve_users(info, **kwargs):
         hooks = (
             [
                 hook.strip()
-                for hook in info.context.get("setting").get("custom_hooks").split(",")
+                for hook in info.context.get("setting", {})
+                .get("custom_hooks", "")
+                .split(",")
             ]
             if info.context.get("setting", {}).get("custom_hooks")
             else []
@@ -383,29 +385,31 @@ def _resolve_certificate(info, **kwargs):
 
         assert username or password, "Username or password is required"
 
+        settings = info.context.get("setting", {})
+
         region_name = (
-            info.context.get("setting").get("region_name")
-            if info.context.get("setting").get("region_name")
+            settings.get("region_name")
+            if settings.get("region_name")
             else os.getenv("REGIONNAME")
         )
         aws_access_key_id = (
-            info.context.get("setting").get("aws_access_key_id")
-            if info.context.get("setting").get("aws_access_key_id")
+            settings.get("aws_access_key_id")
+            if settings.get("aws_access_key_id")
             else os.getenv("aws_access_key_id")
         )
         aws_secret_access_key = (
-            info.context.get("setting").get("aws_secret_access_key")
-            if info.context.get("setting").get("aws_secret_access_key")
+            settings.get("aws_secret_access_key")
+            if settings.get("aws_secret_access_key")
             else os.getenv("aws_secret_access_key")
         )
         app_client_id = (
-            info.context.get("setting").get("app_client_id")
-            if info.context.get("setting").get("app_client_id")
+            settings.get("app_client_id")
+            if settings.get("app_client_id")
             else os.getenv("app_client_id")
         )
         app_client_secret = (
-            info.context.get("setting").get("app_client_secret")
-            if info.context.get("setting").get("app_client_secret")
+            settings.get("app_client_secret")
+            if settings.get("app_client_secret")
             else os.getenv("app_client_secret")
         )
 
@@ -446,11 +450,11 @@ def _resolve_certificate(info, **kwargs):
         hooks = (
             [
                 hook.strip()
-                for hook in info.context.get("setting")
-                .get("custom_signin_hooks")
-                .split(",")
+                for hook in settings.get(
+                    "custom_signin_hooks",
+                ).split(",")
             ]
-            if info.context.get("setting").get("custom_signin_hooks")
+            if settings.get("custom_signin_hooks")
             else []
         )
         # hooks = ["relation_engine:RelationEngine:get_default_for_login"]

@@ -723,28 +723,30 @@ def _execute_custom_hooks(authorizer):
 # Get a list of resource permissions for a specified user
 def _get_user_permissions(authorizer):
     try:
-        rules = []
         is_admin = (
             bool(int(authorizer.get("is_admin")))
             if authorizer.get("is_admin")
             else False
         )
         # cognito_user_sub = authorizer.get("sub")
-        cognito_user_sub = authorizer.get("user_id")
+        user_id = authorizer.get("user_id")
 
-        if not cognito_user_sub:
-            return rules
+        if not user_id:
+            return None
 
         # Query user / group / role relationships
         role_ids = [
             relationship.role_id
             for relationship in RelationshipModel.scan(
-                RelationshipModel.user_id == cognito_user_sub
+                RelationshipModel.user_id == user_id
             )
         ]
 
         if len(role_ids) < 1:
-            return rules
+            return None
+
+        rules = []
+        result = {}
 
         for role in RoleModel.scan(RoleModel.role_id.is_in(*role_ids)):
             rules += role.permissions
@@ -759,8 +761,6 @@ def _get_user_permissions(authorizer):
             ResourceModel.resource_id.is_in(*resource_ids)
         ):
             resources[resource.resource_id] = resource
-
-        result = {}
 
         for rule in rules:
             resource_id = rule.resource_id.strip()
@@ -806,6 +806,7 @@ def _get_user_permissions(authorizer):
                         #     set(result[function_name][action])
                         # )
             result[function_name] = list(set(result[function_name]))
+
         return result
     except Exception as e:
         raise e

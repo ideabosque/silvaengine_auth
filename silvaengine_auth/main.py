@@ -177,7 +177,6 @@ class Auth(object):
                 query=CertificateQuery,
                 types=certificate_type_class(),
             )
-
             ctx = {"logger": self.logger, "setting": self.setting}
             variables = params.get("variables", {})
             query = params.get("query")
