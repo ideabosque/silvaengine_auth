@@ -310,9 +310,10 @@ class Auth(object):
     ):
         try:
             if type(role_users_map) is dict and len(role_users_map):
-                group_ids = None
+                # group_ids = None
 
-                if relationship_type != RoleRelationshipType.ADMINISTRATOR.value:
+                # if relationship_type != RoleRelationshipType.ADMINISTRATOR.value:
+                if group_id:
                     group_ids = group_id if type(group_id) is list else [group_id]
 
                 for role_id, user_ids in role_users_map.items():
