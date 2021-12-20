@@ -1114,6 +1114,9 @@ def _delete_relationships_by_condition(
     relationship_type, role_ids=None, group_ids=None, user_ids=None,
 ):
     try:
+        if role_ids and type(role_ids) is not list:
+            role_ids = [str(role_ids).strip()]
+            
         if relationship_type is None:
             raise Exception("Missing required parameters", 400)
         elif (
@@ -1159,6 +1162,7 @@ def _delete_relationships_by_condition(
 
         return True
     except Exception as e:
+        print(type(e), e)
         raise e
 
 

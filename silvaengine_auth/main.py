@@ -315,15 +315,17 @@ class Auth(object):
                 if relationship_type != RoleRelationshipType.ADMINISTRATOR.value and group_id:
                     group_ids = group_id if type(group_id) is list else [group_id]
 
-                for role_id, user_ids in role_users_map.items():
-                    if is_remove_existed:
-                        _delete_relationships_by_condition(
-                            relationship_type=relationship_type,
-                            group_ids=group_ids,
-                            user_ids=user_ids,
-                            role_ids=role_id,
-                        )
 
+                if is_remove_existed:
+                    user_ids  = list(set([user_id for items in role_users_map.values() for user_id in items]))
+
+                    _delete_relationships_by_condition(
+                        relationship_type=relationship_type,
+                        group_ids=group_ids,
+                        user_ids=user_ids,
+                    )
+
+                for role_id, user_ids in role_users_map.items():
                     for user_id in user_ids:
                         kwargs = {
                             "role_id": str(role_id).strip(),
@@ -332,7 +334,7 @@ class Auth(object):
                             "updated_by": updated_by,
                             "status": True,
                         }
-
+                        
                         if group_ids is not None:
                             for group_id in list(set(group_ids)):
                                 kwargs["group_id"] = group_id
