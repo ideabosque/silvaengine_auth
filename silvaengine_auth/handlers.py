@@ -1111,7 +1111,7 @@ def _get_roles_by_type(types, status=None, is_admin=None) -> dict:
 
 # Delete user roles by conditions.
 def _delete_relationships_by_condition(
-    relationship_type, role_ids=None, group_ids=None, user_ids=None
+    relationship_type, role_ids=None, group_ids=None, user_ids=None,
 ):
     try:
         if relationship_type is None:
