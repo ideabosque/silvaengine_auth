@@ -1131,9 +1131,7 @@ def _delete_relationships_by_condition(
 
         filter_conditions = [RelationshipModel.type == int(relationship_type)]
 
-        if RoleRelationshipType.ADMINISTRATOR.value == relationship_type:
-            filter_conditions.append(RelationshipModel.group_id.does_not_exist())
-        elif type(group_ids) is list and len(group_ids):
+        if type(group_ids) is list and len(group_ids):
             group_ids = list(set([str(group_id).strip() for group_id in group_ids]))
 
             filter_conditions.append(RelationshipModel.group_id.is_in(*group_ids))

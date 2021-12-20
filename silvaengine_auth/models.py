@@ -28,6 +28,7 @@ class RoleRelationshipType(Enum):
     SELLER = 1
     COMPANY = 2
     FACTORY = 3
+    PRE_ASSIGN_SELLER = 4
 
 
 class BaseModel(Model):

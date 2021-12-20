@@ -266,10 +266,10 @@ class Auth(object):
                         else [str(group_ids).strip()],
                     }
 
-                    # if relationship_type == RoleRelationshipType.FACTORY.value:
-                    #     del kwargs["group_ids"]
-                    # else:
-                    #     del kwargs["user_ids"]
+                    if relationship_type == RoleRelationshipType.PRE_ASSIGN_SELLER.value:
+                        del kwargs["group_ids"]
+                    else:
+                        del kwargs["user_ids"]
 
                     _delete_relationships_by_condition(**kwargs)
 
