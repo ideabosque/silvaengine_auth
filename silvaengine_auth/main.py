@@ -310,7 +310,7 @@ class Auth(object):
     ):
         try:
             if type(role_users_map) is dict and len(role_users_map):
-                # group_ids = None
+                group_ids = None
 
                 # if relationship_type != RoleRelationshipType.ADMINISTRATOR.value:
                 if group_id:
