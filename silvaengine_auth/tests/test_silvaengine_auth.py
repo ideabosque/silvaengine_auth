@@ -480,7 +480,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_certificate(self):
         query = """
             query certificate(
@@ -808,14 +808,14 @@ class SilvaEngineAuthTest(unittest.TestCase):
         )
         print("Response:", response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_get_roles_by_specific_user(self):
         response = self.auth.get_roles_by_specific_user(
             1906, RoleRelationshipType.SELLER.value
         )
         print("test_get_roles_by_specific_user:::::", response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_check_user_permissions(self):
         response = self.auth.check_user_permissions(
             "crm_engine",

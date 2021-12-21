@@ -443,7 +443,7 @@ def _resolve_certificate(info, **kwargs):
             ClientId=app_client_id,
         )
 
-        if not response.get("AuthenticationResult").get("IdToken"):
+        if not response or not response.get("AuthenticationResult", {}).get("IdToken"):
             raise Exception("Failed to sign in on cognito")
 
         # @TODO: hooks
