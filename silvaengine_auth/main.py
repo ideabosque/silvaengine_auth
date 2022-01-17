@@ -249,6 +249,7 @@ class Auth(object):
         group_ids,
         user_ids,
         updated_by=None,
+        by_group_id=False,
     ):
         try:
             # 1. Get roles by role type
@@ -266,10 +267,10 @@ class Auth(object):
                         else [str(group_ids).strip()],
                     }
 
-                    if relationship_type == RoleRelationshipType.PRE_ASSIGN_SELLER.value:
-                        del kwargs["group_ids"]
-                    else:
+                    if by_group_id:
                         del kwargs["user_ids"]
+                    else:
+                        del kwargs["group_ids"]
 
                     _delete_relationships_by_condition(**kwargs)
 
@@ -312,12 +313,22 @@ class Auth(object):
             if type(role_users_map) is dict and len(role_users_map):
                 group_ids = None
 
-                if relationship_type != RoleRelationshipType.ADMINISTRATOR.value and group_id:
+                if (
+                    relationship_type != RoleRelationshipType.ADMINISTRATOR.value
+                    and group_id
+                ):
                     group_ids = group_id if type(group_id) is list else [group_id]
 
-
                 if is_remove_existed:
-                    user_ids  = list(set([user_id for items in role_users_map.values() for user_id in items]))
+                    user_ids = list(
+                        set(
+                            [
+                                user_id
+                                for items in role_users_map.values()
+                                for user_id in items
+                            ]
+                        )
+                    )
 
                     _delete_relationships_by_condition(
                         relationship_type=relationship_type,
@@ -334,7 +345,7 @@ class Auth(object):
                             "updated_by": updated_by,
                             "status": True,
                         }
-                        
+
                         if group_ids is not None:
                             for group_id in list(set(group_ids)):
                                 kwargs["group_id"] = group_id
