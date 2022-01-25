@@ -20,11 +20,11 @@ from silvaengine_auth import Auth, RoleRelationshipType
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger()
 setting = {
-    "region_name": os.getenv("region_name"),
-    "aws_access_key_id": os.getenv("aws_access_key_id"),
-    "aws_secret_access_key": os.getenv("aws_secret_access_key"),
-    "app_client_id": os.getenv("app_client_id"),
-    "app_client_secret": os.getenv("app_client_secret"),
+    "region_name": os.getenv("REGION_NAME"),
+    "aws_access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+    "aws_secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    "app_client_id": os.getenv("APP_CLIENT_ID"),
+    "app_client_secret": os.getenv("APP_CLIENT_SECRET"),
     "custom_hooks": "relation_engine:RelationEngine:get_users_by_cognito_user_id",
 }
 
@@ -275,16 +275,28 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_update_role(self):
         mutation = """
-            mutation updateRole(
-                    $roleId: String!,
-                    $permissions: [PermissionInputType]
-                ) {
+            mutation pdateRole(
+                $roleId: String!
+                $type: Int
+                $isAdmin: Boolean
+                $name: String
+                $permissions: [PermissionInputType]
+                $updatedBy: String
+                $description: String
+                $status: Boolean
+            ) {
                 updateRole(
-                    roleId: $roleId,
+                    roleId: $roleId
+                    name: $name
                     permissions: $permissions
+                    updatedBy: $updatedBy
+                    roleDescription: $description
+                    status: $status
+                    roleType: $type
+                    isAdmin: $isAdmin
                 ) {
                     role{
                         roleId
@@ -309,24 +321,27 @@ class SilvaEngineAuthTest(unittest.TestCase):
             }
         """
         variables = {
-            "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
-            "permissions": [
-                {
-                    "resourceId": "db1d5fcb2d0b692f2a423e2f2ae23247",
-                    "permissions": [
-                        {
-                            "operation": "query",
-                            "operationName": "paginateProducts",
-                            "exclude": [],
-                        },
-                        {
-                            "operation": "query",
-                            "operationName": "showProduct",
-                            "exclude": ["companyCode"],
-                        },
-                    ],
-                },
-            ],
+            # "roleId": "7774efc2-0a6e-11ec-9dc1-0242ac120002",
+            # "permissions": [
+            #     {
+            #         "resourceId": "db1d5fcb2d0b692f2a423e2f2ae23247",
+            #         "permissions": [
+            #             {
+            #                 "operation": "query",
+            #                 "operationName": "paginateProducts",
+            #                 "exclude": [],
+            #             },
+            #             {
+            #                 "operation": "query",
+            #                 "operationName": "showProduct",
+            #                 "exclude": ["companyCode"],
+            #             },
+            #         ],
+            #     },
+            # ],
+            "roleId": "cc1d018b-0af8-11ec-bb01-5d5264ad5593",
+            "name": "GWI QC Manager",
+            "description": "GWI QC Manager 123",
         }
         payload = {"mutation": mutation, "variables": variables}
         response = self.auth.role_graphql(**payload)
@@ -480,7 +495,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_certificate(self):
         query = """
             query certificate(

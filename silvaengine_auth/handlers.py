@@ -53,6 +53,7 @@ def _create_role_handler(info, kwargs):
 # Update role for specified ID.
 def _update_role_handler(info, kwargs):
     try:
+        print("++++++++++++++++++", kwargs)
         role = RoleModel(kwargs.get("role_id"))
         actions = [
             RoleModel.updated_at.set(datetime.utcnow()),
@@ -667,8 +668,12 @@ def _authorize_response(event, context):
         # Append the custom context hooks setting to context
         if settings.get("custom_context_hooks"):
             additional_context.update(
-                {"custom_context_hooks": settings.get("custom_context_hooks")}
+                {
+                    "custom_context_hooks": settings.get("custom_context_hooks"),
+                }
             )
+
+        print(">>>>>>>>>>>>> ADDITIONAL CONTEXT >>>>>>>>>>>>>>>>", additional_context)
 
         return authorizer.authorize(is_allow=True, context=additional_context)
     except Exception as e:
@@ -1159,6 +1164,8 @@ def _delete_relationships_by_condition(
 
             for condition in filter_conditions:
                 filter_condition = filter_condition & (condition)
+
+        print("===========================================", filter_condition)
 
         for relationship in RelationshipModel.scan(filter_condition=filter_condition):
             relationship.delete()
