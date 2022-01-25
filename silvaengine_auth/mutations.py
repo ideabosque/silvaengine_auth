@@ -66,7 +66,6 @@ class UpdateRole(Mutation):
     @staticmethod
     def mutate(root, info, **kwargs):
         try:
-            print(">>>>>>>>>>>>>>>>>>>>>>>", kwargs)
             _role = _update_role_handler(info, kwargs)
             role = RoleType(
                 **Utility.json_loads(
