@@ -238,6 +238,8 @@ def _delete_relationship_handler(info, relationship_id):
             raise Exception("`relationshipId` is required", 400)
 
         # Delete the group/user/role relationship.
+        print("DELETE RELATIONSHIP >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        print(relationship_id)
         return RelationshipModel(relationship_id).delete()
     except Exception as e:
         raise e
@@ -1162,8 +1164,11 @@ def _delete_relationships_by_condition(
             for condition in filter_conditions:
                 filter_condition = filter_condition & (condition)
 
+        print("DELETE RELATIONSHIP BY CONDITION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         for relationship in RelationshipModel.scan(filter_condition=filter_condition):
+            print(relationship)
             relationship.delete()
+
 
         return True
     except Exception as e:

@@ -275,7 +275,7 @@ class SilvaEngineAuthTest(unittest.TestCase):
         response = self.auth.role_graphql(**payload)
         logger.info(response)
 
-    # @unittest.skip("demonstrating skipping")
+    @unittest.skip("demonstrating skipping")
     def test_update_role(self):
         mutation = """
             mutation pdateRole(
