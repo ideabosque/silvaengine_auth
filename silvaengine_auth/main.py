@@ -125,48 +125,45 @@ class Auth(object):
                 mutation=RoleMutations,
                 types=role_type_class(),
             )
-            default = {"authorizer": {"is_admin": "0", "seller_id": 2018}}
-            ctx = {
+            context = {
                 "logger": self.logger,
                 "setting": self.setting,
-                "context": params.get("context", default),
+                "context": params.get("context"),
             }
             variables = params.get("variables", {})
-            query = params.get("query")
+            operations = params.get("query")
+            response = {
+                "errors": "Invalid operations.",
+                "status_code": 400,
+            }
 
-            if query is not None:
-                execution_result = schema.execute(
-                    query, context_value=ctx, variable_values=variables
-                )
+            if not operations:
+                return Utility.json_dumps(response)
 
-            mutation = params.get("mutation")
-
-            if mutation is not None:
-                execution_result = schema.execute(
-                    mutation, context_value=ctx, variable_values=variables
-                )
+            execution_result = schema.execute(
+                operations, context_value=context, variable_values=variables
+            )
 
             if not execution_result:
-                return None
-
-            status_code = 400 if execution_result.invalid else 200
-
-            if execution_result.errors:
-                return Utility.json_dumps(
-                    {
-                        "errors": [
-                            Utility.format_error(e) for e in execution_result.errors
-                        ],
-                        "status_code": 500,
-                    }
-                )
-
-            return Utility.json_dumps(
-                {
-                    "data": execution_result.data,
-                    "status_code": status_code,
+                response = {
+                    "errors": "Invalid execution result.",
                 }
-            )
+            elif execution_result.errors:
+                response = {
+                    "errors": [
+                        Utility.format_error(e) for e in execution_result.errors
+                    ],
+                }
+            elif execution_result.invalid:
+                response = execution_result
+            elif execution_result.data:
+                response = {"data": execution_result.data, "status_code": 200}
+            else:
+                response = {
+                    "errors": "Uncaught execution error.",
+                }
+
+            return Utility.json_dumps(response)
         except Exception as e:
             raise e
 
@@ -177,30 +174,45 @@ class Auth(object):
                 query=CertificateQuery,
                 types=certificate_type_class(),
             )
-            ctx = {"logger": self.logger, "setting": self.setting}
+            context = {
+                "logger": self.logger,
+                "setting": self.setting,
+                "context": params.get("context"),
+            }
             variables = params.get("variables", {})
-            query = params.get("query")
+            operations = params.get("query")
+            response = {
+                "errors": "Invalid operations.",
+                "status_code": 400,
+            }
 
-            if query is not None:
-                execution_result = schema.execute(
-                    query, context_value=ctx, variable_values=variables
-                )
+            if not operations:
+                return Utility.json_dumps(response)
 
-                if execution_result.errors:
-                    raise Exception(execution_result.errors, 500)
-                elif execution_result.invalid:
-                    raise Exception("Request data of is invalid", 400)
-                elif not execution_result.data:
-                    raise Exception("No data", 406)
+            execution_result = schema.execute(
+                operations, context_value=context, variable_values=variables
+            )
 
-                return Utility.json_dumps(
-                    {
-                        "data": execution_result.data,
-                        "status_code": 200,
-                    }
-                )
+            if not execution_result:
+                response = {
+                    "errors": "Invalid execution result.",
+                }
+            elif execution_result.errors:
+                response = {
+                    "errors": [
+                        Utility.format_error(e) for e in execution_result.errors
+                    ],
+                }
+            elif execution_result.invalid:
+                response = execution_result
+            elif execution_result.data:
+                response = {"data": execution_result.data, "status_code": 200}
+            else:
+                response = {
+                    "errors": "Uncaught execution error.",
+                }
 
-            raise Exception("Request body is invalid", 400)
+            return Utility.json_dumps(response)
         except Exception as e:
             raise e
 
